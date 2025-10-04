@@ -1,0 +1,23 @@
+{
+  "name": "projet_co-s5",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "express": "^5.1.0",
+    "mysql2": "^3.15.1",
+    "mysql3": "^0.7.4",
+    "readline-sync": "^1.4.10",
+    "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
