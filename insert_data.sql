@@ -1,4 +1,5 @@
-INSERT INTO media (title, url, type)
+-- Insère les données dans la table correctement créée
+INSERT INTO media (title, description, image_url)
 VALUES
-('Vidéo d''exemple', 'https://example.com/video.mp4', 'video'),
-('Image d''exemple', 'https://example.com/photo.jpg', 'image');
+('Statue de la liberté', 'Statue emblématique située à New York', 'image'),
+('Poème du matin', 'Quelques vers doux pour commencer la journée', NULL);

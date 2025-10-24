@@ -1,18 +1,11 @@
-const sqlite3 = require("sqlite3").verbose();
-const path = require("path");
+import { dbPromise } from '../config/database.js';
 
-const dbPath = path.join(__dirname, "../../database.db");
-
-function getAllMedia(req, res) {
-  const db = new sqlite3.Database(dbPath);
-  db.all("SELECT * FROM media", (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-    } else {
-      res.json(rows);
-    }
-    db.close();
-  });
+export async function getAllMedia(req, res) {
+  try {
+    const db = await dbPromise;
+    const media = await db.all('SELECT * FROM media ORDER BY id DESC');
+    res.json(media);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 }
-
-module.exports = { getAllMedia };
