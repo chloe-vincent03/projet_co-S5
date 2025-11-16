@@ -45,16 +45,23 @@ async function loadDetail() {
 
     const item = await res.json();
 
+    // Création du HTML pour les tags
+    const tagsHTML = item.tags && item.tags.length > 0 
+      ? `<p>${item.tags.join(', ')}</p>` 
+      : '';
+
     container.innerHTML = `
       <h1>${item.title}</h1>
       <img src="${item.image_url}" alt="${item.title}" width="400" height="500"> 
       <p>${item.description || ""}</p>
+      ${tagsHTML}
       <small>Ajouté le ${new Date(item.created_at).toLocaleDateString()}</small>
     `;
   } catch (err) {
     container.innerHTML = "<p>Erreur lors du chargement des détails.</p>";
   }
 }
+
 
 // ----------------------
 // LANCEMENT AUTOMATIQUE
