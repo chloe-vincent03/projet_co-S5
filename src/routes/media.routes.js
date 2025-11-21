@@ -65,4 +65,48 @@ router.get('/:id', (req, res) => {
   });
 });
 
+
+// -----------------------------
+// Ajouter un nouveau média
+// -----------------------------
+router.post('/', (req, res) => {
+  const { title, description, type, url, content, tags } = req.body;
+
+  if (!title || !type) {
+    return res.status(400).json({ error: "Titre et type obligatoires" });
+  }
+
+  const sql = `
+    INSERT INTO media (title, description, type, url, content)
+    VALUES (?, ?, ?, ?, ?)
+  `;
+
+  db.run(sql, [title, description, type, url, content], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
+
+    const mediaId = this.lastID;
+
+    // Ajout des tags
+    if (tags && tags.length > 0) {
+      tags.forEach(tag => {
+        // 1 : insérer le tag s’il n'existe pas
+        db.run(`INSERT OR IGNORE INTO tags (name) VALUES (?)`, [tag]);
+        
+        // 2 : lier le tag à l’œuvre
+        db.get(`SELECT id FROM tags WHERE name = ?`, [tag], (err, row) => {
+          if (!err && row) {
+            db.run(
+              `INSERT INTO media_tags (media_id, tag_id) VALUES (?, ?)`,
+              [mediaId, row.id]
+            );
+          }
+        });
+      });
+    }
+
+    res.json({ message: "Œuvre ajoutée", id: mediaId });
+  });
+});
+
+
 export default router;

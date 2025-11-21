@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Ajouter une œuvre</title>
+</head>
+<body>
+
+  <a href="index.html">← Retour à la galerie</a>
+
+  <h1>Informations générales</h1>
+
+  <form id="add-media-form">
+
+    <label>Titre :</label>
+    <input type="text" id="title" required>
+
+    <label>Description :</label>
+    <textarea id="description"></textarea>
+
+    <label>Type :</label>
+    <select id="type" required>
+      <option value="">Choisir…</option>
+      <option value="image">Image</option>
+      <option value="audio">Audio</option>
+      <option value="video">Vidéo</option>
+      <option value="text">Texte</option>
+    </select>
+
+    <label>URL (image/audio/vidéo) :</label>
+    <input type="text" id="url">
+
+    <label>Contenu (si texte) :</label>
+    <textarea id="content"></textarea>
+
+    <label>Tags (séparés par des virgules) :</label>
+    <input type="text" id="tags" placeholder="ex : noël, musique, hiver">
+
+    <button type="submit">Ajouter</button>
+  </form>
+
+  <script src="script.js"></script>
+</body>
+</html>

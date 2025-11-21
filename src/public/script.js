@@ -144,6 +144,48 @@ async function loadDetail() {
   }
 }
 
+
+// ----------------------
+// AJOUTER UNE OEUVRE
+// ----------------------
+
+async function createMedia() {
+  const form = document.getElementById('add-media-form');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const data = {
+      title: document.getElementById('title').value,
+      description: document.getElementById('description').value,
+      type: document.getElementById('type').value,
+      url: document.getElementById('url').value,
+      content: document.getElementById('content').value,
+      tags: document.getElementById('tags').value
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t.length > 0)
+    };
+
+    const res = await fetch('/api/media', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      alert("Œuvre ajoutée !");
+      window.location.href = "index.html";
+    } else {
+      alert("Erreur : " + result.error);
+    }
+  });
+}
+
+
 // ----------------------
 // INITIALISATION
 // ----------------------
@@ -175,6 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById('detail')) {
     loadDetail();
   }
+  
 });
 
 let galleryData = []; 
