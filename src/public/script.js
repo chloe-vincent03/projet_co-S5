@@ -53,7 +53,7 @@ if (filteredData.length === 0) {
         return `<a class="media-card" href="oeuvre.html?id=${item.id}"><div class="video-preview">🎬</div><p>${item.title}</p></a>`;
       }
       if (item.type === 'text') {
-        const preview = item.content.slice(0, 80) + "...";
+        const preview = item.content.slice(0, 150) + "...";
         return `<a class="media-card" href="oeuvre.html?id=${item.id}"><div class="text-preview">${preview}</div></a>`;
       }
       return "";
