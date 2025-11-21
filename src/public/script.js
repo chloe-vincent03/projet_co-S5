@@ -1,23 +1,30 @@
 // ----------------------
 // GALERIE
 // ----------------------
-async function loadGallery() {
+let galleryData = []; // stocke toutes les données récupérées
+
+async function loadGallery(filter = 'all') {
   const container = document.getElementById('gallery');
   if (!container) return;
 
   try {
-    const res = await fetch('/api/media');
-    const data = await res.json();
+    if (galleryData.length === 0) {
+      const res = await fetch('/api/media');
+      galleryData = await res.json();
+    }
 
-    container.innerHTML = data.map(item => {
-      
+    let filteredData = galleryData;
+    if (filter !== 'all') {
+      filteredData = galleryData.filter(item => item.type === filter);
+    }
+
+    container.innerHTML = filteredData.map(item => {
       if (item.type === 'image') {
         return `
           <a class="media-card" href="oeuvre.html?id=${item.id}">
             <img src="${item.url}" alt="${item.title}">
           </a>`;
       }
-
       if (item.type === 'audio') {
         return `
           <a class="media-card" href="oeuvre.html?id=${item.id}">
@@ -25,15 +32,13 @@ async function loadGallery() {
             <p>${item.title}</p>
           </a>`;
       }
-
-      if (item.type === 'video') { // gestion vidéo
+      if (item.type === 'video') {
         return `
           <a class="media-card" href="oeuvre.html?id=${item.id}">
             <div class="video-preview">🎬</div>
             <p>${item.title}</p>
           </a>`;
       }
-
       if (item.type === 'text') {
         const preview = item.content.slice(0, 80) + "...";
         return `
@@ -41,7 +46,6 @@ async function loadGallery() {
             <div class="text-preview">${preview}</div>
           </a>`;
       }
-
       return "";
     }).join('');
 
@@ -50,6 +54,7 @@ async function loadGallery() {
     console.error(err);
   }
 }
+
 
 // ----------------------
 // DETAIL
@@ -127,12 +132,18 @@ async function loadDetail() {
   }
 }
 
-// On attend que le DOM soit complètement chargé
 document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById('gallery')) {
     loadGallery();
+
+    const filterSelect = document.getElementById('filter-type');
+    filterSelect.addEventListener('change', (e) => {
+      loadGallery(e.target.value); // recharge la galerie avec le filtre
+    });
   }
+
   if (document.getElementById('detail')) {
     loadDetail();
   }
 });
+
