@@ -6,6 +6,18 @@ import { authenticateSession } from "../middleware/auth.js";
 
 const router = express.Router();
 
+router.get("/users", (req, res) => {
+  const sql = "SELECT user_id, username, email, is_admin FROM Users";
+
+  db.getDB().all(sql, [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+    res.json(rows);
+  });
+});
+
+
 // REGISTER
 router.post("/register", async (req, res) => {
   const { username, email, password, first_name, last_name } = req.body;
