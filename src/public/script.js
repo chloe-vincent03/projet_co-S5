@@ -1,7 +1,7 @@
 // ----------------------
 // GALERIE
 // ----------------------
-async function loadGallery(filter = 'all', sort = 'date-desc') {
+async function loadGallery(filter = 'all', sort = 'date-desc', tagsFilter = '') {
   const container = document.getElementById('gallery');
   if (!container) return;
 
@@ -11,11 +11,26 @@ async function loadGallery(filter = 'all', sort = 'date-desc') {
       galleryData = await res.json();
     }
 
-    // Filtrer par type
     let filteredData = galleryData;
+
+    // Filtrer par type
     if (filter !== 'all') {
-      filteredData = galleryData.filter(item => item.type === filter);
+      filteredData = filteredData.filter(item => item.type === filter);
     }
+
+    // Filtrer par tags
+    if (tagsFilter.trim() !== '') {
+      const tagsArray = tagsFilter.toLowerCase().split(',').map(tag => tag.trim());
+      filteredData = filteredData.filter(item =>
+        item.tags && item.tags.some(t => tagsArray.includes(t.toLowerCase()))
+      );
+    }
+    // Vérifie si des médias correspondent aux filtres
+if (filteredData.length === 0) {
+  container.innerHTML = "<p>Aucune œuvre ne correspond à ce(s) tag(s).</p>";
+  return;
+}
+
 
     // Trier selon le critère choisi
     filteredData.sort((a, b) => {
@@ -49,6 +64,7 @@ async function loadGallery(filter = 'all', sort = 'date-desc') {
     console.error(err);
   }
 }
+
 
 
 
@@ -128,21 +144,31 @@ async function loadDetail() {
   }
 }
 
+// ----------------------
+// INITIALISATION
+// ----------------------
+
 document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById('gallery')) {
     loadGallery(); // chargement initial
 
-    // Filtre par type
     const filterSelect = document.getElementById('filter-type');
+    const sortSelect = document.getElementById('sort-gallery');
+    const tagsInput = document.getElementById('filter-tags');
+
+    // Filtre par type
     filterSelect.addEventListener('change', () => {
-      const sortSelect = document.getElementById('sort-gallery');
-      loadGallery(filterSelect.value, sortSelect.value);
+      loadGallery(filterSelect.value, sortSelect.value, tagsInput.value);
     });
 
     // Tri
-    const sortSelect = document.getElementById('sort-gallery');
     sortSelect.addEventListener('change', () => {
-      loadGallery(filterSelect.value, sortSelect.value);
+      loadGallery(filterSelect.value, sortSelect.value, tagsInput.value);
+    });
+
+    // Filtre par tags (recharge à chaque saisie)
+    tagsInput.addEventListener('input', () => {
+      loadGallery(filterSelect.value, sortSelect.value, tagsInput.value);
     });
   }
 
@@ -151,6 +177,4 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-let galleryData = [];
-
-
+let galleryData = []; 
