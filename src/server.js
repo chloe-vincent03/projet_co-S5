@@ -1,4 +1,6 @@
 import express from "express";
+import cors from "cors";
+
 import dotenv from "dotenv";
 import mediaRoutes from "./routes/media.routes.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -14,6 +16,14 @@ dotenv.config();
 const app = express();
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
+
+app.use(
+  cors({
+    origin: "http://localhost:5173", // ton frontend Vue
+    credentials: true, // pour envoyer les cookies/session
+  })
+);
+
 
 // Middlewares
 app.use(express.json());
@@ -35,6 +45,8 @@ app.use(
 
 // Static folder
 app.use(express.static(path.join(dirname, "public")));
+
+
 
 // Routes
 app.use("/api/media", mediaRoutes);
