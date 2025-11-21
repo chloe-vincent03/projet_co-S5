@@ -1,9 +1,7 @@
 // ----------------------
 // GALERIE
 // ----------------------
-let galleryData = []; // stocke toutes les données récupérées
-
-async function loadGallery(filter = 'all') {
+async function loadGallery(filter = 'all', sort = 'date-desc') {
   const container = document.getElementById('gallery');
   if (!container) return;
 
@@ -13,38 +11,35 @@ async function loadGallery(filter = 'all') {
       galleryData = await res.json();
     }
 
+    // Filtrer par type
     let filteredData = galleryData;
     if (filter !== 'all') {
       filteredData = galleryData.filter(item => item.type === filter);
     }
 
+    // Trier selon le critère choisi
+    filteredData.sort((a, b) => {
+      if (sort === 'date-desc') return new Date(b.created_at) - new Date(a.created_at);
+      if (sort === 'date-asc') return new Date(a.created_at) - new Date(b.created_at);
+      if (sort === 'title-asc') return a.title.localeCompare(b.title);
+      if (sort === 'title-desc') return b.title.localeCompare(a.title);
+      return 0;
+    });
+
+    // Génération du HTML
     container.innerHTML = filteredData.map(item => {
       if (item.type === 'image') {
-        return `
-          <a class="media-card" href="oeuvre.html?id=${item.id}">
-            <img src="${item.url}" alt="${item.title}">
-          </a>`;
+        return `<a class="media-card" href="oeuvre.html?id=${item.id}"><img src="${item.url}" alt="${item.title}"></a>`;
       }
       if (item.type === 'audio') {
-        return `
-          <a class="media-card" href="oeuvre.html?id=${item.id}">
-            <div class="audio-preview">🎵</div>
-            <p>${item.title}</p>
-          </a>`;
+        return `<a class="media-card" href="oeuvre.html?id=${item.id}"><div class="audio-preview">🎵</div><p>${item.title}</p></a>`;
       }
       if (item.type === 'video') {
-        return `
-          <a class="media-card" href="oeuvre.html?id=${item.id}">
-            <div class="video-preview">🎬</div>
-            <p>${item.title}</p>
-          </a>`;
+        return `<a class="media-card" href="oeuvre.html?id=${item.id}"><div class="video-preview">🎬</div><p>${item.title}</p></a>`;
       }
       if (item.type === 'text') {
         const preview = item.content.slice(0, 80) + "...";
-        return `
-          <a class="media-card" href="oeuvre.html?id=${item.id}">
-            <div class="text-preview">${preview}</div>
-          </a>`;
+        return `<a class="media-card" href="oeuvre.html?id=${item.id}"><div class="text-preview">${preview}</div></a>`;
       }
       return "";
     }).join('');
@@ -54,6 +49,7 @@ async function loadGallery(filter = 'all') {
     console.error(err);
   }
 }
+
 
 
 // ----------------------
@@ -134,11 +130,19 @@ async function loadDetail() {
 
 document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById('gallery')) {
-    loadGallery();
+    loadGallery(); // chargement initial
 
+    // Filtre par type
     const filterSelect = document.getElementById('filter-type');
-    filterSelect.addEventListener('change', (e) => {
-      loadGallery(e.target.value); // recharge la galerie avec le filtre
+    filterSelect.addEventListener('change', () => {
+      const sortSelect = document.getElementById('sort-gallery');
+      loadGallery(filterSelect.value, sortSelect.value);
+    });
+
+    // Tri
+    const sortSelect = document.getElementById('sort-gallery');
+    sortSelect.addEventListener('change', () => {
+      loadGallery(filterSelect.value, sortSelect.value);
     });
   }
 
@@ -146,4 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadDetail();
   }
 });
+
+let galleryData = [];
+
 
