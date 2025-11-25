@@ -1,11 +1,26 @@
-// import sqlite3 from 'sqlite3';
-
-// export const db = new sqlite3.Database('./database.db')
-
 import sqlite3 from "sqlite3";
-import { open } from "sqlite";
+import path from "path";
+import { fileURLToPath } from "url";
 
-export const dbPromise = open({
-  filename: "./database.db",
-  driver: sqlite3.Database,
+sqlite3.verbose();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const dbPath = path.join(__dirname, "../../database.db");
+
+// On ouvre la DB une seule fois
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error("Error opening database:", err.message);
+  } else {
+    console.log("Connected to SQLite database");
+  }
 });
+
+// On exporte un objet avec getDB()
+export default {
+  getDB() {
+    return db;
+  },
+};

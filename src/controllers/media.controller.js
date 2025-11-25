@@ -10,7 +10,7 @@
 // }
 
 
-import { dbPromise } from "../config/database.js";
+import db from "../config/database.js";
 
 export async function getAllMedia(req, res) {
   try {
