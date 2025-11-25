@@ -9,8 +9,6 @@ import { fileURLToPath } from "url";
 import session from "express-session";
 
 
-
-
 dotenv.config();
 
 const app = express();
@@ -23,6 +21,14 @@ app.use(
     credentials: true, // pour envoyer les cookies/session
   })
 );
+// Pour servir les fichiers HTML / JS / images
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Pour lire le JSON dans les requêtes POST (si besoin plus tard)
+app.use(express.json());
+
+// Routes API
+app.use('/api/media', mediaRoutes);
 
 
 // Middlewares
