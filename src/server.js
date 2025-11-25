@@ -7,8 +7,8 @@ import { fileURLToPath } from 'url';
 dotenv.config();
 
 const app = express();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
 
 // Pour servir les fichiers HTML / JS / images
 app.use(express.static(path.join(__dirname, 'public')));
