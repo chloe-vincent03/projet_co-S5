@@ -22,7 +22,7 @@ app.use(
   })
 );
 // Pour servir les fichiers HTML / JS / images
-app.use(express.static(path.join(__dirname, 'public')));
+// app.use(express.static(path.join(__dirname, 'public')));
 
 // Pour lire le JSON dans les requêtes POST (si besoin plus tard)
 app.use(express.json());
