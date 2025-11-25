@@ -2,16 +2,51 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Œuvres</title>
-  <script defer src="script.js"></script>
+  <title>Galerie</title>
   <style>
-    body { font-family: sans-serif; padding: 2rem; background: #fafafa; }
-    .media { margin-bottom: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 1rem; }
-    img { max-width: 300px; display: block; margin-top: 1rem; }
+    .media-card img {
+      max-width: 150px;
+      height: auto;
+      object-fit: cover;
+    }
   </style>
 </head>
 <body>
-  <h1>Mes Œuvres</h1>
+
+  <h1>Galerie des œuvres</h1>
+
+  <label for="sort-gallery">Trier par :</label>
+<select id="sort-gallery">
+  <option value="date-desc">Date : du plus récent au plus ancien</option>
+  <option value="date-asc">Date : du plus ancien au plus récent</option>
+  <option value="title-asc">Titre : A → Z</option>
+  <option value="title-desc">Titre : Z → A</option>
+</select>
+
+  <label for="filter-type">Filtrer par nature :</label>
+<select id="filter-type">
+  <option value="all">Tous</option>
+  <option value="image">Images</option>
+  <option value="audio">Audio</option>
+  <option value="video">Vidéos</option>
+  <option value="text">Récit</option>
+</select>
+
+<label for="filter-tags">Filtrer par tag :</label>
+<input type="text" id="filter-tags" placeholder="Exemple : noël, vidéo">
+
+
+
+
+  <!-- Conteneur pour la galerie -->
   <div id="gallery"></div>
+
+  <a href="ajouter.html">
+  <button>➕ Ajouter une œuvre</button>
+</a>
+
+
+  <script src="script.js"></script>
 </body>
 </html>
+
