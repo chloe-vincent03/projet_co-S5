@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import db from "../config/database.js";
 import { authenticateSession } from "../middleware/auth.js";
 
-
 const router = express.Router();
 
 router.get("/users", (req, res) => {
@@ -16,7 +15,6 @@ router.get("/users", (req, res) => {
     res.json(rows);
   });
 });
-
 
 // REGISTER
 router.post("/register", async (req, res) => {
@@ -105,6 +103,28 @@ router.post("/logout", (req, res) => {
   res.json({
     success: true,
     message: "Logged out",
+  });
+});
+
+router.delete("/delete-account", authenticateSession, (req, res) => {
+  const userId = req.user.user_id;
+  
+  const sql = "DELETE FROM Users WHERE user_id = ?";
+
+  db.getDB().run(sql, [userId], function (err) {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    req.session.destroy(() => {
+      res.json({
+        success: true,
+        message: "Compte supprimé avec succès.",
+      });
+    });
   });
 });
 
