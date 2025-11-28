@@ -21,11 +21,12 @@ async function submit() {
     tags: tags.value.split(',').map(t => t.trim()).filter(t => t.length > 0)
   };
 
-  const res = await fetch('/api/media', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
+const res = await fetch('http://localhost:3000/api/media', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
+
 
   if (res.ok) {
     alert("Œuvre ajoutée !");
