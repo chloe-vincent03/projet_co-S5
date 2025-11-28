@@ -1,39 +1,39 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100">
-    <div class="p-8 bg-white rounded-xl shadow-md w-full max-w-sm">
+  <div class="">
+    <div class="">
       
-      <h1 class="text-2xl font-bold mb-6 text-center">Login</h1>
+      <h1 class="">Login</h1>
 
       <form @submit.prevent="loginUser">
 
-        <div class="mb-4">
-          <label class="block font-medium mb-1">Email</label>
+        <div class="">
+          <label class="">Email</label>
           <input
             v-model="email"
             type="email"
-            class="w-full p-2 border rounded-lg"
+            class=""
             required
           />
         </div>
 
         <div class="mb-4">
-          <label class="block font-medium mb-1">Mot de passe</label>
+          <label class="">Mot de passe</label>
           <input
             v-model="password"
             type="password"
-            class="w-full p-2 border rounded-lg"
+            class=""
             required
           />
         </div>
 
         <!-- ERROR MESSAGE -->
-        <p v-if="errorMessage" class="text-red-600 mb-3 text-center">
+        <p v-if="errorMessage" class="">
           {{ errorMessage }}
         </p>
 
         <button 
           type="submit"
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold"
+          class=""
         >
           Se connecter
         </button>
