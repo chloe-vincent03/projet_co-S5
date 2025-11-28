@@ -6,8 +6,13 @@ const route = useRoute();
 const item = ref(null);
 
 onMounted(async () => {
-  const res = await fetch(`http://localhost:3000/api/media/${route.params.id}`);
-  item.value = await res.json();
+  try {
+    const res = await fetch(`http://localhost:3000/api/media/${route.params.id}`);
+    const data = await res.json();
+    item.value = data;
+  } catch (err) {
+    console.error(err);
+  }
 });
 </script>
 
@@ -19,6 +24,10 @@ onMounted(async () => {
   <div v-else>
     <h1>{{ item.title }}</h1>
 
+    <p v-if="item.username">
+      Créé par : <strong>{{ item.username }} ({{ item.first_name }} {{ item.last_name }})</strong>
+    </p>
+
     <img v-if="item.type === 'image'" :src="item.url" width="400">
 
     <audio v-else-if="item.type === 'audio'" controls>
@@ -29,9 +38,7 @@ onMounted(async () => {
       <source :src="item.url" type="video/mp4">
     </video>
 
-    <pre v-else-if="item.type === 'text'">
-      {{ item.content }}
-    </pre>
+    <pre v-else-if="item.type === 'text'">{{ item.content }}</pre>
 
     <p>{{ item.description }}</p>
 

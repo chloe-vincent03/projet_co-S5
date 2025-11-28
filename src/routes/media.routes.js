@@ -2,18 +2,21 @@ import express from 'express';
 import sqlite3 from 'sqlite3';
 
 const router = express.Router();
-const db = new sqlite3.Database('./database.db'); // Assure-toi que le chemin est correct
+const db = new sqlite3.Database('./database.db'); // Vérifie le chemin
+
 
 // -----------------------------
-// Récupérer tous les médias (pour la galerie)
+// Récupérer tous les médias (pour la galerie) avec tags + utilisateur
 // -----------------------------
 router.get('/', (req, res) => {
   const sql = `
     SELECT m.id, m.title, m.description, m.type, m.url, m.content, m.created_at,
-           GROUP_CONCAT(t.name) AS tags
+           GROUP_CONCAT(t.name) AS tags,
+           u.username, u.first_name, u.last_name
     FROM media m
     LEFT JOIN media_tags mt ON m.id = mt.media_id
     LEFT JOIN tags t ON mt.tag_id = t.id
+    LEFT JOIN Users u ON m.user_id = u.user_id
     GROUP BY m.id
   `;
 
@@ -23,7 +26,6 @@ router.get('/', (req, res) => {
       return res.status(500).json({ error: 'Erreur serveur' });
     }
 
-    // Transformer la chaîne de tags en tableau
     const medias = rows.map(row => ({
       ...row,
       tags: row.tags ? row.tags.split(',') : []
@@ -33,18 +35,21 @@ router.get('/', (req, res) => {
   });
 });
 
+
 // -----------------------------
-// Récupérer un média avec ses tags
+// Récupérer un média avec tags + utilisateur
 // -----------------------------
 router.get('/:id', (req, res) => {
   const id = req.params.id;
 
   const sql = `
     SELECT m.id, m.title, m.description, m.type, m.url, m.content, m.created_at,
-           GROUP_CONCAT(t.name) AS tags
+           GROUP_CONCAT(t.name) AS tags,
+           u.username, u.first_name, u.last_name
     FROM media m
     LEFT JOIN media_tags mt ON m.id = mt.media_id
     LEFT JOIN tags t ON mt.tag_id = t.id
+    LEFT JOIN Users u ON m.user_id = u.user_id
     WHERE m.id = ?
     GROUP BY m.id
   `;
@@ -54,7 +59,7 @@ router.get('/:id', (req, res) => {
       console.error(err);
       return res.status(500).json({ error: 'Erreur serveur' });
     }
-    if (!row) return res.status(404).json({ error: 'Oeuvre non trouvée' });
+    if (!row) return res.status(404).json({ error: 'Œuvre non trouvée' });
 
     const media = {
       ...row,
@@ -67,21 +72,21 @@ router.get('/:id', (req, res) => {
 
 
 // -----------------------------
-// Ajouter un nouveau média
+// Ajouter un nouveau média avec tags et user_id
 // -----------------------------
 router.post('/', (req, res) => {
-  const { title, description, type, url, content, tags } = req.body;
+  const { title, description, type, url, content, tags, user_id } = req.body;
 
-  if (!title || !type) {
-    return res.status(400).json({ error: "Titre et type obligatoires" });
+  if (!title || !type || !user_id) {
+    return res.status(400).json({ error: "Titre, type et user_id obligatoires" });
   }
 
   const sql = `
-    INSERT INTO media (title, description, type, url, content)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO media (title, description, type, url, content, user_id)
+    VALUES (?, ?, ?, ?, ?, ?)
   `;
 
-  db.run(sql, [title, description, type, url, content], function (err) {
+  db.run(sql, [title, description, type, url, content, user_id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
 
     const mediaId = this.lastID;

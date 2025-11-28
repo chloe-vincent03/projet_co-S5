@@ -1,12 +1,13 @@
 -- Insère les médias (type, url, content)
-INSERT INTO media (title, description, type, url, content)
+INSERT INTO media (title, description, type, url, content, user_id)
 VALUES
 -- IMAGE
 ('Statue de la liberté', 
  'Statue emblématique située à New York', 
  'image',
  'https://pub-498e51fcc7ba483a8fee1aecfaa3d006.r2.dev/src/IMG_9729.JPG',
- NULL
+ NULL,
+ 1
 ),
 
 -- TEXTE / POÈME
@@ -14,7 +15,8 @@ VALUES
  'Quelques vers doux pour commencer la journée', 
  'text',
  NULL,
- 'Le soleil se lève, effleurant l’horizon,\nLa rosée danse encore sur les fleurs en bouton.\nQuelques mots murmurés, légers comme le vent,\nPour commencer le jour doucement.'
+ 'Le soleil se lève, effleurant l’horizon,\nLa rosée danse encore sur les fleurs en bouton.\nQuelques mots murmurés, légers comme le vent,\nPour commencer le jour doucement.',
+ 2
 ),
 
 -- IMAGE
@@ -22,7 +24,8 @@ VALUES
  'Une belle maison située au bord d un lac tranquille', 
  'image',
  'https://pub-498e51fcc7ba483a8fee1aecfaa3d006.r2.dev/src/IMG_1709.JPG',
- NULL
+ NULL,
+ 3
 ),
 
 -- AUDIO
@@ -30,7 +33,8 @@ VALUES
  'Une mélodie festive pour célébrer les fêtes de fin d année', 
  'audio',
  'https://pub-498e51fcc7ba483a8fee1aecfaa3d006.r2.dev/src/christmas-holiday-festive-cheer-snow-427231.mp3',
- NULL
+ NULL,
+ 1
 ),
 
 -- VIDEO
@@ -38,35 +42,40 @@ VALUES
  'Une vidéo festive pour célébrer les fêtes de fin d année', 
  'video',
  'https://pub-498e51fcc7ba483a8fee1aecfaa3d006.r2.dev/src/3565-172488151_small.mp4',
- NULL
+ NULL,
+ 2
 ),
 
 ('Illustration de rivière', 
  'Une illustration apaisante d une rivière au coucher du soleil', 
  'image',
  'https://pub-498e51fcc7ba483a8fee1aecfaa3d006.r2.dev/src/river-8286407_1280.png',
- NULL
+ NULL,
+ 3
 ),
 
 ('Il pleure dans mon cœur',
  'Un poème mélancolique', 
  'text',
  NULL,
- 'Il pleure dans mon cœur\nComme il pleut sur la ville;\nQuelle est cette langueur\nQui pénètre mon cœur?\n\nÔ bruit doux de la pluie\nPar terre et sur les toits!\nPour un cœur qui s’ennuie,\nÔ le chant de la pluie!\n\nIl pleure sans raison\nDans ce cœur qui s’écœure.\nQuoi! nulle trahison?...\nCe deuil est sans raison.'
+ 'Il pleure dans mon cœur\nComme il pleut sur la ville;\nQuelle est cette langueur\nQui pénètre mon cœur?\n\nÔ bruit doux de la pluie\nPar terre et sur les toits!\nPour un cœur qui s’ennuie,\nÔ le chant de la pluie!\n\nIl pleure sans raison\nDans ce cœur qui s’écœure.\nQuoi! nulle trahison?...\nCe deuil est sans raison.',
+ 2
 ),
 
 ('vidéo jour de pluie',
  'Une vidéo relaxante de pluie tombant sur une fenêtre', 
  'video',
  'https://pub-498e51fcc7ba483a8fee1aecfaa3d006.r2.dev/src/270983_small.mp4',
- NULL
+ NULL,
+ 1
 ),
 
 ('musique détente',
  'Une musique apaisante pour la relaxation', 
  'audio',
  'https://pub-498e51fcc7ba483a8fee1aecfaa3d006.r2.dev/src/reunir-284530.mp3',
- NULL
+ NULL,
+ 3
 );
 
 -- Insère les tags
