@@ -8,11 +8,14 @@ CREATE TABLE media (
     title TEXT NOT NULL,
     description TEXT,
     
-    type TEXT NOT NULL,              -- image, audio, video, text
-    url TEXT,                        -- pour les images, audio, vidéo (lien externe ou local)
-    content TEXT,                    -- pour les textes / poèmes
-    
-    created_at TEXT DEFAULT (datetime('now'))
+    type TEXT NOT NULL,          -- image, audio, video, text
+    url TEXT,                    -- pour les images/vidéos/audio
+    content TEXT,                -- pour les textes
+
+    user_id INTEGER,             -- créateur de l’œuvre
+    created_at TEXT DEFAULT (datetime('now')),
+
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 
 -- Table des tags
