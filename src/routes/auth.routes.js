@@ -16,6 +16,7 @@ router.get("/users", (req, res) => {
   });
 });
 
+
 // REGISTER
 router.post("/register", async (req, res) => {
   const { username, email, password, first_name, last_name } = req.body;
@@ -39,19 +40,32 @@ router.post("/register", async (req, res) => {
       [username, email, hashed, first_name, last_name],
       function (err) {
         if (err)
-          return res.status(500).json({ success: false, message: err.message });
+          return res
+            .status(500)
+            .json({ success: false, message: err.message });
 
-        return res.json({
-          success: true,
-          message: "User registered",
+        // 🔥 ICI : on crée la session comme dans /login
+        const userSession = {
           user_id: this.lastID,
-        });
+          username,
+          email,
+          is_admin: 0, // par défaut
+        };
+
+        req.session.user = userSession;
+
+       return res.json({
+         success: true,
+         message: "User registered & logged in",
+         user: userSession,
+       });
       }
     );
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
 
 // LOGIN
 router.post("/login", (req, res) => {
@@ -106,26 +120,28 @@ router.post("/logout", (req, res) => {
   });
 });
 
+// DELETE ACCOUNT
 router.delete("/delete-account", authenticateSession, (req, res) => {
-  const userId = req.user.user_id;
-  
+  const userId = req.session.user.user_id;
+
   const sql = "DELETE FROM Users WHERE user_id = ?";
 
   db.getDB().run(sql, [userId], function (err) {
     if (err) {
       return res.status(500).json({
         success: false,
-        message: err.message,
+        message: "Erreur lors de la suppression du compte",
       });
     }
 
     req.session.destroy(() => {
       res.json({
         success: true,
-        message: "Compte supprimé avec succès.",
+        message: "Compte supprimé",
       });
     });
   });
 });
+
 
 export default router;

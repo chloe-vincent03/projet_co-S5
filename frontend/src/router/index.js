@@ -5,17 +5,55 @@ import index from "../views/index.vue";
 /* import Gallery from "../views/Gallery.vue"; */
 import Details from "@/views/Details.vue";
 import AddMedia from "@/views/AddMedia.vue";
+import Profil from "@/views/Profil.vue"
+import { useUserStore } from "../stores/user";
+
 const routes = [
   { path: "/", name: "index", component: index }, // 👈 accueil ici
-  { path: "/register", name: "Register", component: Register },
-  { path: "/login", name: "Login", component: Login },
+  {
+    path: "/register",
+    name: "Register",
+    component: Register,
+    meta: { guestOnly: true },
+  },
+  {
+    path: "/login",
+    name: "Login",
+    component: Login,
+    meta: { guestOnly: true },
+  },
   { path: "/oeuvre/:id", component: Details },
   { path: "/ajouter", component: AddMedia },
+  { path: "/profil", component: Profil, meta: { requiresAuth: true } },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
 });
+
+router.beforeEach(async (to, from, next) => {
+  const store = useUserStore();
+
+  // attendre fetchUser seulement la première fois
+  if (!store.user && !store.isLoggedIn) {
+    await store.fetchUser();
+  }
+
+  // Page protégée + utilisateur NON connecté
+  if (to.meta.requiresAuth && !store.isLoggedIn) {
+    return next("/login");
+  }
+
+  // Page guestOnly + utilisateur connecté
+  if (to.meta.guestOnly && store.isLoggedIn) {
+    return next("/");
+  }
+
+  next();
+});
+
+
+
 
 export default router;
