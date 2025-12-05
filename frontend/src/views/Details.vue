@@ -1,4 +1,4 @@
-<script setup>
+<script setup >
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -8,10 +8,17 @@ const item = ref(null);
 onMounted(async () => {
   try {
     const res = await fetch(`http://localhost:3000/api/media/${route.params.id}`);
-    const data = await res.json();
+
+    const txt = await res.text();
+    console.log("Réponse brute :", txt);  // 👈 IMPORTANT
+
+    if (!res.ok) throw new Error(`Erreur HTTP : ${res.status}`);
+
+    const data = JSON.parse(txt);
     item.value = data;
+
   } catch (err) {
-    console.error(err);
+    console.error("Erreur lors du fetch :", err);
   }
 });
 </script>
