@@ -6,7 +6,7 @@ import { authenticateSession } from "../middleware/auth.js";
 const router = express.Router();
 
 router.get("/users", (req, res) => {
-  const sql = "SELECT user_id, username, email, bio, is_admin FROM Users";
+  const sql = "SELECT user_id, username, email, first_name, last_name, bio, is_admin FROM Users";
 
   db.getDB().all(sql, [], (err, rows) => {
     if (err) {
@@ -137,7 +137,7 @@ router.post("/login", (req, res) => {
 // CURRENT USER
 router.get("/me", authenticateSession, (req, res) => {
   const sql = `
-    SELECT user_id, username, email, is_admin, bio, avatar, created_at
+    SELECT user_id, username, email, first_name, last_name, is_admin, bio, avatar, created_at
     FROM Users
     WHERE user_id = ?
   `;
