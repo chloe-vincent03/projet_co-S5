@@ -1,5 +1,6 @@
 <script setup>
 import { useUserStore } from "./stores/user";
+import HeaderPage from "./views/HeaderPage.vue";
 
 const store = useUserStore();
 store.fetchUser(); // récupère l'utilisateur au chargement
@@ -7,11 +8,31 @@ store.fetchUser(); // récupère l'utilisateur au chargement
 
 
 <template>
+  <!-- Header -->
+  <HeaderPage />
+
+  <!-- Loader Global -->
   
 
-    <div>
-    <router-view />
-  </div>
-</template>
+  <!-- Contenu Principal -->
+  <main class="pt-24 relative">
+    
+    <Suspense>
+      <!-- Composant dynamique avec fallback -->
+      <template #default>
+        <RouterView v-slot="{ Component }">
+          <component :is="Component" :key="$route.path" />
+        </RouterView>
+      </template>
+      
+      <!-- Fallback Loader -->
+      <template #fallback>
+        <p>Chargement...</p>
+      </template>
+    </Suspense>
+    
+  </main>
 
-<style scoped></style>
+  <!-- Footer -->
+  <FooterPage />
+</template>
