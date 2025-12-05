@@ -46,11 +46,11 @@ const filtered = computed(() => {
 </script>
 
 <template>
-  <h1>Galerie des œuvres</h1>
+  <h1 class="text-amber-950" >Galerie des œuvres</h1>
 
   <label>Trier par :</label>
   <select v-model="sort">
-    <option value="date-desc">Date : du plus récent au plus ancien</option>
+    <option value="date-desc" class="text-amber-950" >Date : du plus récent au plus ancien</option>
     <option value="date-asc">Date : du plus ancien au plus récent</option>
     <option value="title-asc">Titre : A → Z</option>
     <option value="title-desc">Titre : Z → A</option>
