@@ -4,6 +4,8 @@
       <h1 class="">Mon Profil</h1>
 
       <div v-if="user">
+        <p><strong>Prénom :</strong> {{ user.first_name }}</p>
+        <p><strong>Nom de famille :</strong> {{ user.last_name }}</p>
         <p><strong>Nom d'utilisateur :</strong> {{ user.username }}</p>
         <p><strong>Email :</strong> {{ user.email }}</p>
         <p><strong>Bio :</strong> {{ user.bio}}</p>
