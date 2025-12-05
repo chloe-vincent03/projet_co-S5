@@ -26,6 +26,42 @@ router.get('/', (req, res) => {
   });
 });
 
+router.get('/:id', (req, res) => {
+  const id = req.params.id;
+
+  const sql = `
+    SELECT 
+      m.id, m.title, m.description, m.type, m.url, m.content, m.created_at,
+      m.user_id,
+      u.username, u.first_name, u.last_name,
+      GROUP_CONCAT(t.name) AS tags
+    FROM media m
+    LEFT JOIN users u ON m.user_id = u.user_id
+    LEFT JOIN media_tags mt ON m.id = mt.media_id
+    LEFT JOIN tags t ON mt.tag_id = t.id
+    WHERE m.id = ?
+    GROUP BY m.id
+  `;
+
+  db.get(sql, [id], (err, row) => {
+    if (err) {
+      console.error("SQL ERROR:", err);
+      return res.status(500).json({ error: "Erreur serveur" });
+    }
+    if (!row) return res.status(404).json({ error: "Média introuvable" });
+
+    const media = {
+      ...row,
+      tags: row.tags ? row.tags.split(',') : []
+    };
+
+    res.json(media);
+  });
+});
+
+
+
+
 // -----------------------------
 // Ajouter un nouveau média avec tags
 // -----------------------------
