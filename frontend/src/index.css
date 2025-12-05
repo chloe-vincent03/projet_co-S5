@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+@font-face {
+    font-family: "PlumePixel";
+    src: url("/fonts/PlumePixel.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+}
+
+@theme{
+    --color-blue-plumepixel: #4036F3; 
+}

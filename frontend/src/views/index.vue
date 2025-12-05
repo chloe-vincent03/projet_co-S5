@@ -73,35 +73,33 @@ async function logout() {
 
 <template>
 
-  <!-- BARRE D'ACTIONS COMPTE -->
-<div style="margin-bottom: 20px;">
-  
-  <!-- 🔹 NON CONNECTÉ -->
-  <div v-if="!store.isLoggedIn" >
-    <button @click="goLogin" class="">Login</button>
-    <button @click="goRegister" class="">Register</button>
+<!-- BARRE D'ACTIONS COMPTE -->
+<div class="mb-6 flex items-center gap-4">
+  <div v-if="!store.isLoggedIn" class="flex gap-3">
+    <button @click="goLogin" class="px-3 py-1 border rounded">Login</button>
+    <button @click="goRegister" class="px-3 py-1 border rounded">Register</button>
   </div>
 
-  <!-- 🔹 CONNECTÉ -->
-  <div v-else >
-    <button @click="goProfile">Profil</button>
-    <button @click="logout">Déconnexion</button>
+  <div v-else class="flex gap-3">
+    <button @click="goProfile" class="px-3 py-1 border rounded">Profil</button>
+    <button @click="logout" class="px-3 py-1 border rounded">Déconnexion</button>
   </div>
-
 </div>
 
-  <h1>Galerie des œuvres</h1>
+<h1 class="font-[PlumePixel] text-3xl mb-4">Galerie des œuvres</h1>
 
-  <label>Trier par :</label>
-  <select v-model="sort">
-    <option value="date-desc" class="text-amber-950" >Date : du plus récent au plus ancien</option>
-    <option value="date-asc">Date : du plus ancien au plus récent</option>
-    <option value="title-asc">Titre : A → Z</option>
-    <option value="title-desc">Titre : Z → A</option>
+<div class="flex flex-wrap items-center gap-4 mb-6">
+
+  <label class="text-sm font-medium">Trier :</label>
+  <select v-model="sort" class="border px-2 py-1 rounded text-sm">
+    <option value="date-desc">Du + récent au + ancien</option>
+    <option value="date-asc">Du + ancien au + récent</option>
+    <option value="title-asc">Titre A → Z</option>
+    <option value="title-desc">Titre Z → A</option>
   </select>
 
-  <label>Filtrer par nature :</label>
-  <select v-model="filterType">
+  <label class="text-sm font-medium">Nature :</label>
+  <select v-model="filterType" class="border px-2 py-1 rounded text-sm">
     <option value="all">Tous</option>
     <option value="image">Images</option>
     <option value="audio">Audio</option>
@@ -109,35 +107,34 @@ async function logout() {
     <option value="text">Récit</option>
   </select>
 
-  <label>Filtrer par tag :</label>
-  <input type="text" v-model="filterTags" placeholder="Exemple : noël, vidéo">
+  <label class="text-sm font-medium">Tags :</label>
+  <input
+    type="text"
+    v-model="filterTags"
+    class="border px-2 py-1 rounded text-sm"
+    placeholder="noël, vidéo"
+  >
+</div>
 
-  <div v-if="filtered.length === 0">
-    Aucune œuvre ne correspond à ce(s) tag(s).
-  </div>
 
-  <div class="gallery">
-    <GalleryItem
-      v-for="item in filtered"
-      :key="item.id"
-      :item="item"
-    />
-  </div>
+<div v-if="filtered.length === 0" class="text-gray-500 text-sm mb-6">
+  Aucune œuvre ne correspond à ce(s) tag(s).
+</div>
 
-  <router-link to="/ajouter">
-    <button>➕ Ajouter une œuvre</button>
-  </router-link>
+<div class="columns-6 gap-4 space-y-4 px-4">
+  <GalleryItem
+    v-for="item in filtered"
+    :key="item.id"
+    :item="item"
+    class="break-inside-avoid block border border-blue-plumepixel overflow-hidden shadow-sm"
+  />
+</div>
+
+<router-link to="/ajouter">
+  <button class="fixed bottom-20 right-6 bg-blue-plumepixel text-white px-5 py-3 rounded-full shadow-lg font-[PlumePixel]">
+    Crée
+  </button>
+</router-link>
 </template>
 
-<style>
-.media-card img {
-  max-width: 150px;
-  height: auto;
-  object-fit: cover;
-}
-.gallery {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-</style>
+
