@@ -60,6 +60,6 @@ app.use(express.static(path.join(dirname, "public")));
 // START SERVER
 // -----------------------------
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () =>
-  console.log(`Serveur lancé sur http://localhost:${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`Serveur lancé sur http://localhost:${PORT}`);
+});
