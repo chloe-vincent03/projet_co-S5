@@ -14,6 +14,12 @@
 
         <input v-model="password" type="password" placeholder="Password"
                class="" required />
+                <textarea 
+        v-model="bio"
+        placeholder="Votre description / bio"
+        rows="4"
+        class=""
+      ></textarea>
 
         <button class="">
           S'inscrire
@@ -40,6 +46,7 @@ const router = useRouter();
 const username = ref("");
 const email = ref("");
 const password = ref("");
+const bio = ref('');
 const errorMessage = ref("");
 
 async function registerUser() {
@@ -47,6 +54,7 @@ async function registerUser() {
     username: username.value,
     email: email.value,
     password: password.value,
+    bio: bio.value,
   });
 
   if (res.success) {

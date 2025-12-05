@@ -7,6 +7,8 @@ import Details from "@/views/Details.vue";
 import AddMedia from "@/views/AddMedia.vue";
 import Profil from "@/views/Profil.vue"
 import { useUserStore } from "../stores/user";
+import ProfilSetting from "@/views/ProfilSetting.vue";
+
 
 const routes = [
   { path: "/", name: "index", component: index }, // 👈 accueil ici
@@ -25,6 +27,12 @@ const routes = [
   { path: "/oeuvre/:id", component: Details },
   { path: "/ajouter", component: AddMedia },
   { path: "/profil", component: Profil, meta: { requiresAuth: true } },
+  {
+    path: "/profil/settings",
+    name: "ProfilSettings",
+    component: ProfilSetting,
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({

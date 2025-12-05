@@ -6,6 +6,7 @@
       <div v-if="user">
         <p><strong>Nom d'utilisateur :</strong> {{ user.username }}</p>
         <p><strong>Email :</strong> {{ user.email }}</p>
+        <p><strong>Bio :</strong> {{ user.bio}}</p>
         <p v-if="user.is_admin === 1" class="">
           Admin ✔️
         </p>
@@ -24,6 +25,10 @@
       >
         Supprimer mon compte 
       </button>
+      <button @click="goToSettings" class="">
+  ⚙️ Paramètres
+</button>
+
 
       <p v-if="message" class="">
         {{ message }}
@@ -64,4 +69,8 @@ async function deleteAcc() {
     message.value = res.message || "Erreur lors de la suppression.";
   }
 }
+function goToSettings() {
+  router.push("/profil/settings");
+}
+
 </script>

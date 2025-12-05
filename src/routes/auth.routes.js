@@ -6,7 +6,7 @@ import { authenticateSession } from "../middleware/auth.js";
 const router = express.Router();
 
 router.get("/users", (req, res) => {
-  const sql = "SELECT user_id, username, email, is_admin FROM Users";
+  const sql = "SELECT user_id, username, email, bio, is_admin FROM Users";
 
   db.getDB().all(sql, [], (err, rows) => {
     if (err) {
@@ -19,7 +19,7 @@ router.get("/users", (req, res) => {
 
 // REGISTER
 router.post("/register", async (req, res) => {
-  const { username, email, password, first_name, last_name } = req.body;
+  const { username, email, password, first_name, last_name, bio } = req.body;
 
   if (!username || !email || !password)
     return res.status(400).json({
@@ -31,13 +31,13 @@ router.post("/register", async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
 
     const sql = `
-      INSERT INTO Users (username, email, password_hash, first_name, last_name)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO Users (username, email, password_hash, first_name, last_name, bio)
+      VALUES (?, ?, ?, ?, ?, ?)
     `;
 
     db.getDB().run(
       sql,
-      [username, email, hashed, first_name, last_name],
+      [username, email, hashed, first_name, last_name, bio || ""],
       function (err) {
         if (err)
           return res
@@ -49,6 +49,7 @@ router.post("/register", async (req, res) => {
           user_id: this.lastID,
           username,
           email,
+          bio: bio || "",
           is_admin: 0, // par défaut
         };
 
@@ -64,6 +65,36 @@ router.post("/register", async (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
+});
+
+// UPDATE PROFILE
+router.put("/update-profile", authenticateSession, (req, res) => {
+  const { username, email, bio, first_name, last_name } = req.body;
+
+  const sql = `
+    UPDATE Users 
+    SET username = ?, email = ?, bio = ?, first_name = ?, last_name = ?
+    WHERE user_id = ?
+  `;
+
+  db.getDB().run(
+    sql,
+    [username, email, bio, first_name, last_name, req.session.user.user_id],
+    function (err) {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: "Erreur lors de la mise à jour du profil",
+          error: err.message,
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Profil mis à jour",
+      });
+    }
+  );
 });
 
 
@@ -105,11 +136,23 @@ router.post("/login", (req, res) => {
 
 // CURRENT USER
 router.get("/me", authenticateSession, (req, res) => {
-  res.json({
-    success: true,
-    user: req.user,
+  const sql = `
+    SELECT user_id, username, email, is_admin, bio, avatar, created_at
+    FROM Users
+    WHERE user_id = ?
+  `;
+
+  db.getDB().get(sql, [req.user.user_id], (err, user) => {
+    if (err)
+      return res.status(500).json({ success: false, message: err.message });
+
+    res.json({
+      success: true,
+      user,
+    });
   });
 });
+
 
 // LOGOUT
 router.post("/logout", (req, res) => {
