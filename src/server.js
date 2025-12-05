@@ -14,42 +14,50 @@ const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
 // -----------------------------
-// Middlewares
+// CORS
 // -----------------------------
-app.use(cors({
-  origin: "http://localhost:5173",
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+
+// -----------------------------
+// JSON PARSING
+// -----------------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // -----------------------------
-// Session
+// 🔥 SESSION — doit être AVANT les routes
 // -----------------------------
-app.use(session({
-  secret: process.env.SESSION_SECRET || "super secret key",
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    maxAge: 24 * 60 * 60 * 1000, // 1 jour
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-  }
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "super-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: false, // mettre true en prod (HTTPS)
+      maxAge: 24 * 60 * 60 * 1000,
+    },
+  })
+);
 
 // -----------------------------
-// Static folder
-// -----------------------------
-app.use(express.static(path.join(dirname, "public")));
-
-// -----------------------------
-// Routes
+// ROUTES API
 // -----------------------------
 app.use("/api/media", mediaRoutes);
 app.use("/api/auth", authRoutes);
 
 // -----------------------------
-// Lancement du serveur
+// STATIC FILES
+// -----------------------------
+app.use(express.static(path.join(dirname, "public")));
+
+// -----------------------------
+// START SERVER
 // -----------------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

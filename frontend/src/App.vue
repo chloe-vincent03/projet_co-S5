@@ -1,4 +1,10 @@
-<script setup></script>
+<script setup>
+import { useUserStore } from "./stores/user";
+
+const store = useUserStore();
+store.fetchUser(); // récupère l'utilisateur au chargement
+</script>
+
 
 <template>
   

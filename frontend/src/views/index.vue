@@ -1,6 +1,14 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import GalleryItem from '../components/GalleryItems.vue';
+import { useUserStore } from "../stores/user";
+import { useRouter } from "vue-router";
+
+
+const store = useUserStore();
+const router = useRouter();
+
+
 
 const galleryData = ref([]);
 const sort = ref('date-desc');
@@ -43,10 +51,46 @@ const filtered = computed(() => {
 
   return items;
 });
+
+function goLogin() {
+  router.push("/login");
+}
+
+function goRegister() {
+  router.push("/register");
+}
+
+function goProfile() {
+  router.push("/profil");
+}
+
+async function logout() {
+  await store.logout();
+  router.push("/");
+}
+
 </script>
 
 <template>
-  <h1 class="text-amber-950" >Galerie des œuvres</h1>
+
+  <!-- BARRE D'ACTIONS COMPTE -->
+<div style="margin-bottom: 20px;">
+  
+  <!-- 🔹 NON CONNECTÉ -->
+  <div v-if="!store.isLoggedIn" >
+    <button @click="goLogin" class="">Login</button>
+    <button @click="goRegister" class="">Register</button>
+  </div>
+
+  <!-- 🔹 CONNECTÉ -->
+  <div v-else >
+    <button @click="goProfile">Profil</button>
+    <button @click="logout">Déconnexion</button>
+  </div>
+
+</div>
+
+  <h1>Galerie des œuvres</h1>
 
   <label>Trier par :</label>
   <select v-model="sort">
