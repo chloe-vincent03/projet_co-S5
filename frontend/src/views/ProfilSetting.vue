@@ -3,7 +3,6 @@
     <h1>Paramètres du Profil</h1>
 
     <div v-if="user" class="settings-card">
-
       <label>Nom d'utilisateur :</label>
       <input v-model="form.username" type="text" />
 
@@ -19,11 +18,30 @@
       <label>Nom :</label>
       <input v-model="form.last_name" type="text" />
 
-      <button @click="saveChanges" class="btn save">Enregistrer les modifications</button>
+      <button @click="saveChanges" class="btn save">
+        Enregistrer les modifications
+      </button>
       <button @click="backToProfile" class="btn back">Retour au profil</button>
+      <MyButton variant="rouge" icon="delete">Mon bouton</MyButton>
+ <MyButton icon="valider" :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"
+        >Mon bouton</MyButton
+      >      
+      <MyButton variant="rouge" size="small" icon="search">Mon bouton</MyButton>
+      <MyButton variant="rouge" size="small" icon="voir">Mon bouton</MyButton>
+      <MyButton
+        :style="{
+          border: '2px solid var(--color-blue-plumepixel)',
+          color: 'var(--color-blue-plumepixel)',
+        }"
+        variant="transparent"
+      >
+        Mon bouton
+      </MyButton>
+      <MyButton icon="parcourir" :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"
+        >Mon bouton</MyButton
+      >
 
       <p v-if="message" class="message">{{ message }}</p>
-
     </div>
   </div>
 </template>
@@ -33,6 +51,7 @@ import { computed, ref } from "vue";
 import { useUserStore } from "../stores/user";
 import axios from "axios";
 import { useRouter } from "vue-router";
+import MyButton from "@/components/MyButton.vue";
 
 const store = useUserStore();
 const router = useRouter();
@@ -61,9 +80,9 @@ async function saveChanges() {
 
     // mettre à jour le store
     await store.fetchUser();
-
   } catch (err) {
-    message.value = err.response?.data?.message || "Erreur lors de la mise à jour.";
+    message.value =
+      err.response?.data?.message || "Erreur lors de la mise à jour.";
   }
 }
 
