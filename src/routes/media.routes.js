@@ -111,5 +111,25 @@ router.post('/', (req, res) => {
   });
 });
 
+// GET all media for a specific user
+router.get("/user/:id", (req, res) => {
+  const userId = req.params.id;
+
+  const sql = `
+    SELECT id, title, url, type, description, created_at
+    FROM media
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+  `;
+
+db.all(sql, [userId], (err, rows) => {
+  if (err)
+    return res.status(500).json({ success: false, message: err.message });
+
+  res.json(rows);
+});
+});
+
+
 
 export default router;

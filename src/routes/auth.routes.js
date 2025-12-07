@@ -186,5 +186,26 @@ router.delete("/delete-account", authenticateSession, (req, res) => {
   });
 });
 
+// GET USER BY ID (profil public)
+router.get("/users/:id", (req, res) => {
+  const userId = req.params.id;
+
+  const sql = `
+    SELECT user_id, username, first_name, last_name, bio, avatar, created_at
+    FROM Users
+    WHERE user_id = ?
+  `;
+
+  db.getDB().get(sql, [userId], (err, user) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json(user);
+  });
+});
 
 export default router;
