@@ -9,6 +9,7 @@ import IconSearch from "./icons/IconSearch.vue";
 import IconDelete from "./icons/IconDelete.vue";
 import IconVoir from "./icons/IconVoir.vue";
 import IconValider from "./icons/IconValider.vue";
+import IconLogout from "./icons/IconLogout.vue";
 
 const props = defineProps({
   url: { type: String, default: null },
@@ -42,7 +43,7 @@ const fonts = {
 
 const icons = {
   settings: IconReglage,
-  logout:   IconCroix,
+  annuler:   IconCroix,
   parcourir: IconParcourir,
   publier: IconPublier,
   search: IconSearch,
@@ -50,7 +51,8 @@ const icons = {
   publier: IconPublier,
   delete: IconDelete,
   voir: IconVoir,
-  valider: IconValider
+  valider: IconValider,
+  logout: IconLogout
 }
 
 
@@ -68,7 +70,7 @@ function handleClick(e) {
       variants[variant],
       sizes[size],
       fonts[font],
-      'inline-flex items-center justify-center',
+      'inline-flex items-center justify-center cursor-pointer w-fit',
     ]"
     @click="handleClick"
   >
@@ -85,8 +87,9 @@ function handleClick(e) {
       variants[variant],
       sizes[size],
       fonts[font],
+      icons[icon],
 
-      'inline-flex items-center justify-center',
+      'inline-flex items-center justify-center cursor-pointer w-fit',
     ]"
     @click="handleClick"
   >
@@ -102,7 +105,7 @@ function handleClick(e) {
       sizes[size],
       fonts[font],
 
-      'inline-flex items-center justify-center',
+      'inline-flex items-center justify-center cursor-pointer w-fit',
     ]"
     @click="handleClick"
   >
