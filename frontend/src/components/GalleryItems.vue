@@ -3,7 +3,10 @@ import { RouterLink } from "vue-router";
 import axios from "axios";
 import { useUserStore } from "@/stores/user";
 
+
+
 const userStore = useUserStore();
+
 
 const props = defineProps({
   item: {
@@ -14,6 +17,8 @@ const props = defineProps({
 
 // Fonction de like / unlike
 const toggleLike = async () => {
+ 
+
   const media = props.item;
 
   if (!userStore.isLoggedIn) {
@@ -44,6 +49,7 @@ const toggleLike = async () => {
     }
   } catch (error) {
     console.error("Erreur toggleLike:", error);
+    
 
     // Si on reçoit 409, ça veut dire que c'était déjà liké en base
     // → on force l'état en "liké" côté front pour se resynchroniser

@@ -9,6 +9,8 @@ const db = new sqlite3.Database('./database.db'); // Vérifie le chemin
 // Récupérer tous les médias
 // -----------------------------
 router.get("/", optionalAuth, (req, res) => {
+    console.log("🔥 req.user dans GET /api/media =", req.user);
+
   const sql = `
 SELECT 
   m.id, m.title, m.description, m.type, m.url, m.content, m.created_at,
