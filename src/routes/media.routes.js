@@ -1,5 +1,6 @@
 import express from 'express';
 import sqlite3 from 'sqlite3';
+import { authenticateSession, optionalAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 const db = new sqlite3.Database('./database.db'); // Vérifie le chemin
@@ -7,26 +8,33 @@ const db = new sqlite3.Database('./database.db'); // Vérifie le chemin
 // -----------------------------
 // Récupérer tous les médias
 // -----------------------------
-router.get('/', (req, res) => {
+router.get("/", optionalAuth, (req, res) => {
   const sql = `
-    SELECT m.id, m.title, m.description, m.type, m.url, m.content, m.created_at,
-           GROUP_CONCAT(t.name) AS tags
-    FROM media m
-    LEFT JOIN media_tags mt ON m.id = mt.media_id
-    LEFT JOIN tags t ON mt.tag_id = t.id
-    GROUP BY m.id
+SELECT 
+  m.id, m.title, m.description, m.type, m.url, m.content, m.created_at,
+  GROUP_CONCAT(t.name) AS tags,
+(SELECT 1 FROM likes WHERE user_id = ? AND media_id = m.id) AS is_liked,
+(SELECT COUNT(*) FROM likes WHERE media_id = m.id) AS likes_count
+FROM media m
+LEFT JOIN media_tags mt ON m.id = mt.media_id
+LEFT JOIN tags t ON mt.tag_id = t.id
+GROUP BY m.id
+
   `;
-  db.all(sql, [], (err, rows) => {
-    if (err) return res.status(500).json({ error: 'Erreur serveur' });
-    const medias = rows.map(row => ({
+  db.all(sql, [req.user?.user_id || null], (err, rows) => {
+    if (err) return res.status(500).json({ error: "Erreur serveur" });
+    const medias = rows.map((row) => ({
       ...row,
-      tags: row.tags ? row.tags.split(',') : []
+      tags: row.tags ? row.tags.split(",") : [],
+      is_liked: !!row.is_liked, // <--------- IMPORTANT
+      likes_count: row.likes_count ?? 0,
     }));
+
     res.json(medias);
   });
 });
 
-router.get('/:id', (req, res) => {
+router.get('/:id', optionalAuth, (req, res) => {
   const id = req.params.id;
 
   const sql = `
@@ -65,7 +73,7 @@ router.get('/:id', (req, res) => {
 // -----------------------------
 // Ajouter un nouveau média avec tags
 // -----------------------------
-router.post('/', (req, res) => {
+router.post('/', optionalAuth, (req, res) => {
   const { title, description, type, url, content, tags } = req.body;
 
   if (!title || !type) {
@@ -112,7 +120,7 @@ router.post('/', (req, res) => {
 });
 
 // GET all media for a specific user
-router.get("/user/:id", (req, res) => {
+router.get("/user/:id", optionalAuth, (req, res) => {
   const userId = req.params.id;
 
   const sql = `
@@ -130,6 +138,45 @@ db.all(sql, [userId], (err, rows) => {
 });
 });
 
+
+
+
+// Like une œuvre
+router.post("/:id/like", authenticateSession, (req, res) => {
+  const mediaId = req.params.id;
+  const userId = req.user.user_id;
+
+  const sql = `
+    INSERT INTO likes (user_id, media_id)
+    VALUES (?, ?)
+  `;
+
+  db.run(sql, [userId, mediaId], function (err) {
+    if (err) {
+      return res.status(409).json({ error: "Déjà liké" });
+    }
+
+    res.json({ message: "Like ajouté" });
+  });
+});
+
+
+// Unlike une œuvre
+router.delete("/:id/like", authenticateSession, (req, res) => {
+  const mediaId = req.params.id;
+  const userId = req.user.user_id;
+
+  const sql = `
+    DELETE FROM likes
+    WHERE user_id = ? AND media_id = ?
+  `;
+
+  db.run(sql, [userId, mediaId], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
+
+    res.json({ message: "Like supprimé" });
+  });
+});
 
 
 export default router;
