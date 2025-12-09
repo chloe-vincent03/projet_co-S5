@@ -6,6 +6,8 @@ import authRoutes from "./routes/auth.routes.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import session from "express-session";
+import cookieParser from "cookie-parser";
+
 
 dotenv.config();
 
@@ -22,6 +24,9 @@ app.use(
     credentials: true,
   })
 );
+
+app.use(cookieParser());
+
 
 // -----------------------------
 // JSON PARSING

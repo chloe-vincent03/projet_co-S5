@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import GalleryItem from '../components/GalleryItems.vue';
 import { useUserStore } from "../stores/user";
 import { useRouter } from "vue-router";
+import axios from 'axios';
 
 
 const store = useUserStore();
@@ -17,10 +18,11 @@ const filterTags = ref('');
 
 async function loadGallery() {
   if (galleryData.value.length === 0) {
-    const res = await fetch('http://localhost:3000/api/media');
-    galleryData.value = await res.json();
+    const res = await axios.get("/media"); // <-- maintenant le cookie est envoyé
+    galleryData.value = res.data;
   }
 }
+
 
 onMounted(loadGallery);
 
