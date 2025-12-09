@@ -80,9 +80,9 @@ onMounted(async () => {
 
           <pre
             v-else-if="item.type === 'text'"
-            class="whitespace-pre-wrap bg-white p-4"
+            class="whitespace-pre-line bg-white p-4"
           >
-            {{ item.content }}
+            {{ item.content.replace(/\\n/g, '\n') }}
           </pre>
         </div>
 

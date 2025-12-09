@@ -54,39 +54,13 @@ const filtered = computed(() => {
   return items;
 });
 
-function goLogin() {
-  router.push("/login");
-}
 
-function goRegister() {
-  router.push("/register");
-}
-
-function goProfile() {
-  router.push("/profil");
-}
-
-async function logout() {
-  await store.logout();
-  router.push("/");
-}
 
 </script>
 
 <template>
 
-<!-- BARRE D'ACTIONS COMPTE -->
-<div class="mb-6 flex items-center gap-4">
-  <div v-if="!store.isLoggedIn" class="flex gap-3">
-    <button @click="goLogin" class="px-3 py-1 border rounded">Login</button>
-    <button @click="goRegister" class="px-3 py-1 border rounded">Register</button>
-  </div>
 
-  <div v-else class="flex gap-3">
-    <button @click="goProfile" class="px-3 py-1 border rounded">Profil</button>
-    <button @click="logout" class="px-3 py-1 border rounded">Déconnexion</button>
-  </div>
-</div>
 
 <h1 class="font-[PlumePixel] text-3xl mb-4">Galerie des œuvres</h1>
 

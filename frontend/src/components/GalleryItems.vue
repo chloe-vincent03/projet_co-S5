@@ -68,9 +68,13 @@ const toggleLike = async () => {
 
       <div v-else-if="item.type === 'audio'">🎵 {{ item.title }}</div>
       <div v-else-if="item.type === 'video'">🎬 {{ item.title }}</div>
-      <div v-else-if="item.type === 'text'">
-        {{ item.content.slice(0, 150) + "…" }}
-      </div>
+    <div
+  v-else-if="item.type === 'text'"
+  class="whitespace-pre-line"
+>
+  {{ item.content.replace(/\\n/g, '\n').slice(0, 150) + "…" }}
+</div>
+
     </RouterLink>
 
     <!-- bouton like -->
