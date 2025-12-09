@@ -1,47 +1,62 @@
 <template>
-  <div class="">
-    <div class="">
-      
-      <h1 class="">Login</h1>
+  <div class="flex items-center justify-center px-4 py-10 lg:py-4 lg:pt-10">
 
-      <form @submit.prevent="loginUser">
+    <div class="bg-white shadow-lg rounded-xl w-full 
+      max-w-md p-6 lg:p-10 
+      border border-blue-plumepixel">
 
-        <div class="">
-          <label class="">Email</label>
+   
+      <h1 class="text-3xl text-blue-plumepixel mb-8 font-[PlumePixel] text-center lg:text-left">
+        Connectez-vous !
+      </h1>
+
+      <form @submit.prevent="loginUser" class="space-y-5">
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Adresse mail</label>
           <input
             v-model="email"
             type="email"
-            class=""
             required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg 
+              focus:ring-0 focus:ring-blue-plumepixel focus:border-blue-plumepixel outline-none"
           />
         </div>
 
-        <div class="mb-4">
-          <label class="">Mot de passe</label>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
           <input
             v-model="password"
             type="password"
-            class=""
             required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg 
+              focus:ring-0 focus:ring-blue-plumepixel focus:border-blue-plumepixel outline-none"
           />
         </div>
 
-        <!-- ERROR MESSAGE -->
-        <p v-if="errorMessage" class="">
-          {{ errorMessage }}
-        </p>
+        <p v-if="errorMessage" class="text-red-600 text-sm">{{ errorMessage }}</p>
 
-        <button 
+        <button
           type="submit"
-          class=""
+          class="w-full bg-blue-plumepixel text-white font-semibold py-2 rounded-lg
+            hover:bg-blue-700 transition"
         >
           Se connecter
         </button>
 
       </form>
+
+      <p class="text-center text-sm text-gray-600 mt-6">
+        Pas encore de compte ?
+        <RouterLink to="/register" class="text-blue-plumepixel font-medium hover:underline">
+          Créer un compte
+        </RouterLink>
+      </p>
+
     </div>
   </div>
 </template>
+
 
 
 <script setup>

@@ -1,6 +1,7 @@
 <script setup>
 import { useUserStore } from "./stores/user";
-import HeaderPage from "./views/HeaderPage.vue";
+import HeaderPage from "./components/HeaderPage.vue";
+import FooterPage from "./components/FooterPage.vue";
 
 const store = useUserStore();
 store.fetchUser(); // récupère l'utilisateur au chargement
@@ -32,7 +33,6 @@ store.fetchUser(); // récupère l'utilisateur au chargement
     </Suspense>
     
   </main>
-
   <!-- Footer -->
   <FooterPage />
 </template>
