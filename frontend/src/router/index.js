@@ -5,9 +5,10 @@ import index from "../views/index.vue";
 /* import Gallery from "../views/Gallery.vue"; */
 import Details from "@/views/Details.vue";
 import AddMedia from "@/views/AddMedia.vue";
-import Profil from "@/views/Profil.vue"
+import Profil from "@/views/profil/index.vue";
 import { useUserStore } from "../stores/user";
 import ProfilSetting from "@/views/ProfilSetting.vue";
+import ProfilPublic from "@/views/profil/[id].vue";
 
 
 const routes = [
@@ -27,6 +28,12 @@ const routes = [
   { path: "/oeuvre/:id", component: Details },
   { path: "/ajouter", component: AddMedia },
   { path: "/profil", component: Profil, meta: { requiresAuth: true } },
+  {
+    path: "/profil/:id",
+    name: "ProfilPublic",
+    component: ProfilPublic,
+  },
+
   {
     path: "/profil/settings",
     name: "ProfilSettings",
@@ -60,8 +67,5 @@ router.beforeEach(async (to, from, next) => {
 
   next();
 });
-
-
-
 
 export default router;

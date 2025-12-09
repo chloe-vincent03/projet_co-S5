@@ -31,9 +31,17 @@ onMounted(async () => {
   <div v-else>
     <h1>{{ item.title }}</h1>
 
-    <p v-if="item.username">
-      Créé par : <strong>{{ item.username }} ({{ item.first_name }} {{ item.last_name }})</strong>
-    </p>
+   <p v-if="item.username">
+  Créé par :
+
+  <router-link
+    :to="`/profil/${item.user_id}`"
+    class="text-blue-plumepixel underline hover:text-blue-700"
+  >
+    {{ item.username }} ({{ item.first_name }} {{ item.last_name }})
+  </router-link>
+</p>
+
 
     <img v-if="item.type === 'image'" :src="item.url" width="400">
 
