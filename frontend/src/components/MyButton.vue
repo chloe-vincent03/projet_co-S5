@@ -10,9 +10,11 @@ import IconDelete from "./icons/IconDelete.vue";
 import IconVoir from "./icons/IconVoir.vue";
 import IconValider from "./icons/IconValider.vue";
 import IconLogout from "./icons/IconLogout.vue";
+import IconPlume from "./icons/IconPlume.vue";
 
 const props = defineProps({
   url: { type: String, default: null },
+  to: { type: String, default: null },
   variant: { type: String, default: "default" },
   size: { type: String, default: "medium" },
   font: { type: String, default: "pixel" },
@@ -43,18 +45,17 @@ const fonts = {
 
 const icons = {
   settings: IconReglage,
-  annuler:   IconCroix,
+  annuler: IconCroix,
   parcourir: IconParcourir,
   publier: IconPublier,
   search: IconSearch,
   connexion: IconConnexion,
-  publier: IconPublier,
   delete: IconDelete,
   voir: IconVoir,
   valider: IconValider,
-  logout: IconLogout
-}
-
+  logout: IconLogout,
+  plume: IconPlume
+};
 
 function handleClick(e) {
   emit("click", e);
@@ -74,15 +75,15 @@ function handleClick(e) {
     ]"
     @click="handleClick"
   >
-<span class="flex items-center gap-2">
-    <component v-if="icon" :is="icons[icon]" class="w-5 h-5" />
-    <slot />
-  </span>
+    <span class="flex items-center gap-2">
+      <component v-if="icon" :is="icons[icon]" class="w-5 h-5" />
+      <slot />
+    </span>
   </a>
 
   <RouterLink
-    v-else-if="url"
-    :to="url"
+    v-else-if="to"
+    :to="to"
     :class="[
       variants[variant],
       sizes[size],
@@ -93,10 +94,10 @@ function handleClick(e) {
     ]"
     @click="handleClick"
   >
-<span class="flex items-center gap-2">
-    <component v-if="icon" :is="icons[icon]" class="w-5 h-5" />
-    <slot />
-  </span>
+    <span class="flex items-center gap-2">
+      <component v-if="icon" :is="icons[icon]" class="w-5 h-5" />
+      <slot />
+    </span>
   </RouterLink>
   <button
     v-else
@@ -109,9 +110,9 @@ function handleClick(e) {
     ]"
     @click="handleClick"
   >
-<span class="flex items-center gap-2">
-    <component v-if="icon" :is="icons[icon]" class="w-5 h-5" />
-    <slot />
-  </span>
+    <span class="flex items-center gap-2">
+      <component v-if="icon" :is="icons[icon]" class="w-5 h-5" />
+      <slot />
+    </span>
   </button>
 </template>
