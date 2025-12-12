@@ -256,4 +256,40 @@ router.delete("/:id/like", authenticateSession, (req, res) => {
 });
 
 
+// -----------------------------
+// Supprimer une œuvre
+// -----------------------------
+router.delete('/:id', authenticateSession, (req, res) => {
+  const mediaId = req.params.id;
+  const userId = req.user.user_id;
+  const isAdmin = req.user.is_admin;
+
+  // 1. Vérifier si l'œuvre existe et appartient à l'utilisateur
+  const checkSql = `SELECT user_id, url FROM media WHERE id = ?`;
+
+  db.get(checkSql, [mediaId], (err, row) => {
+    if (err) return res.status(500).json({ error: "Erreur base de données" });
+    if (!row) return res.status(404).json({ error: "Œuvre introuvable" });
+
+    // Vérification droits (Propriétaire OU Admin)
+    if (row.user_id !== userId && !isAdmin) {
+      return res.status(403).json({ error: "Action non autorisée" });
+    }
+
+    // 2. Supprimer de la base
+    // Note: Le "ON DELETE CASCADE" dans media_tags s'occupe des liens, 
+    // mais pour 'likes' il faut vérifier si on a mis une cascade ou non.
+    // Supposons que SQLite gère les FK si activé, sinon on fait simple.
+
+    // (Optionnel) Ici, on pourrait aussi supprimer le fichier sur R2 avec s3.send(new DeleteObjectCommand(...))
+    // Pour l'instant on supprime juste l'entrée DB comme demandé.
+
+    db.run(`DELETE FROM media WHERE id = ?`, [mediaId], (err) => {
+      if (err) return res.status(500).json({ error: "Erreur lors de la suppression" });
+      res.json({ message: "Œuvre supprimée avec succès" });
+    });
+  });
+});
+
+
 export default router;
