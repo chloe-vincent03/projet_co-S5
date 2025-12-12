@@ -1,15 +1,16 @@
+import 'dotenv/config';
 import express from 'express';
 import sqlite3 from 'sqlite3';
 import { authenticateSession, optionalAuth } from "../middleware/auth.js";
 
 const router = express.Router();
-const db = new sqlite3.Database('./database.db'); // Vérifie le chemin
+const db = new sqlite3.Database('./database.db');
 
 // -----------------------------
 // Récupérer tous les médias
 // -----------------------------
 router.get("/", optionalAuth, (req, res) => {
-    console.log("🔥 req.user dans GET /api/media =", req.user);
+  console.log("🔥 req.user dans GET /api/media =", req.user);
 
   const sql = `
 SELECT 
@@ -75,31 +76,104 @@ router.get('/:id', optionalAuth, (req, res) => {
 // -----------------------------
 // Ajouter un nouveau média avec tags
 // -----------------------------
-router.post('/', optionalAuth, (req, res) => {
-  const { title, description, type, url, content, tags } = req.body;
+import multer from 'multer';
+import mime from 'mime-types';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
-  if (!title || !type) {
-    return res.status(400).json({ error: "Titre et type obligatoires" });
+// Configuration Multer & S3 (Cloudflare R2)
+const upload = multer({ storage: multer.memoryStorage() });
+
+const s3 = new S3Client({
+  region: 'auto',
+  endpoint: process.env.R2_ENDPOINT,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY
+  }
+});
+
+console.log("DEBUG R2 CONFIG:");
+console.log("ENDPOINT:", process.env.R2_ENDPOINT);
+console.log("ACCESS_KEY:", process.env.R2_ACCESS_KEY_ID ? "****" + process.env.R2_ACCESS_KEY_ID.slice(-4) : "UNDEFINED");
+console.log("SECRET_KEY:", process.env.R2_SECRET_ACCESS_KEY ? "SET" : "UNDEFINED");
+console.log("BUCKET:", process.env.R2_BUCKET);
+
+const BUCKET = process.env.R2_BUCKET;
+const ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
+const PUBLIC_BASE = process.env.R2_PUBLIC_BASE;
+
+// -----------------------------
+// Ajouter un nouveau média avec tags (et upload fichier optionnel)
+// -----------------------------
+router.post('/', optionalAuth, upload.single('file'), async (req, res) => {
+  // Extraction des données classiques
+  const { title, description, type, content, tags } = req.body;
+  // L'URL peut venir soit du champ texte (si pas d'upload), soit sera générée
+  let url = req.body.url || '';
+
+  if (!title) {
+    return res.status(400).json({ error: "Titre obligatoire" });
   }
 
+  // Si un fichier est uploadé, on l'envoie sur R2
+  if (req.file) {
+    try {
+      const originalName = req.file.originalname;
+      // Modification du dossier de destination : uploads -> src
+      const key = `src/${Date.now()}-${originalName.replace(/\s/g, '_')}`;
+      const contentType = req.file.mimetype || mime.lookup(originalName) || 'application/octet-stream';
+
+      await s3.send(new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: key,
+        Body: req.file.buffer,
+        ContentType: contentType
+      }));
+
+      // Construction de l'URL finale
+      url = PUBLIC_BASE
+        ? `${PUBLIC_BASE}/${encodeURIComponent(key)}`
+        : `https://${BUCKET}.${ACCOUNT_ID}.r2.cloudflarestorage.com/${encodeURIComponent(key)}`;
+
+    } catch (err) {
+      console.error("Erreur R2:", err);
+      // Retourne l'erreur exacte pour le débuggage
+      return res.status(500).json({ error: "Erreur upload R2: " + err.message });
+    }
+  }
+
+  // Insertion en base
   const insertMediaSql = `
     INSERT INTO media (title, description, type, url, content)
     VALUES (?, ?, ?, ?, ?)
   `;
 
+  // Note: on utilise 'url' qui a été potentiellement mis à jour
   db.run(insertMediaSql, [title, description, type, url, content], function (err) {
     if (err) return res.status(500).json({ error: err.message });
 
     const mediaId = this.lastID;
 
-    // Ajouter les tags comme avant...
-    if (!tags || tags.length === 0) {
-      return res.json({ message: "Œuvre ajoutée", id: mediaId });
+    // Gestion des tags
+    let tagsArray = [];
+    if (tags) {
+      // Si tags est une chaîne "tag1, tag2", on split. Si c'est déjà un array (rare avec FormData mais possible), on garde.
+      tagsArray = Array.isArray(tags) ? tags : tags.split(',');
+    }
+
+    if (!tagsArray || tagsArray.length === 0) {
+      return res.json({ message: "Œuvre ajoutée", id: mediaId, url });
     }
 
     let completed = 0;
-    tags.forEach(tag => {
-      if (!tag) return checkDone();
+    // Nettoyage et filtrage des tags vides
+    const cleanedTags = tagsArray.map(t => t.trim()).filter(t => t.length > 0);
+
+    if (cleanedTags.length === 0) {
+      return res.json({ message: "Œuvre ajoutée", id: mediaId, url });
+    }
+
+    cleanedTags.forEach(tag => {
       db.run(`INSERT OR IGNORE INTO tags (name) VALUES (?)`, [tag], (err) => {
         if (err) console.error(err);
         db.get(`SELECT id FROM tags WHERE name = ?`, [tag], (err, row) => {
@@ -114,8 +188,8 @@ router.post('/', optionalAuth, (req, res) => {
 
     function checkDone() {
       completed++;
-      if (completed === tags.length) {
-        res.json({ message: "Œuvre ajoutée", id: mediaId });
+      if (completed === cleanedTags.length) {
+        res.json({ message: "Œuvre ajoutée", id: mediaId, url });
       }
     }
   });
@@ -132,12 +206,12 @@ router.get("/user/:id", optionalAuth, (req, res) => {
     ORDER BY created_at DESC
   `;
 
-db.all(sql, [userId], (err, rows) => {
-  if (err)
-    return res.status(500).json({ success: false, message: err.message });
+  db.all(sql, [userId], (err, rows) => {
+    if (err)
+      return res.status(500).json({ success: false, message: err.message });
 
-  res.json(rows);
-});
+    res.json(rows);
+  });
 });
 
 

@@ -10,29 +10,46 @@ const type = ref('image');
 const url = ref('');
 const content = ref('');
 const tags = ref('');
+const selectedFile = ref(null);
+
+function handleFileUpload(event) {
+  selectedFile.value = event.target.files[0];
+}
 
 async function submit() {
-  const data = {
-    title: title.value,
-    description: description.value,
-    type: type.value,
-    url: url.value,
-    content: content.value,
-    tags: tags.value.split(',').map(t => t.trim()).filter(t => t.length > 0)
-  };
+  const formData = new FormData();
+  formData.append('title', title.value);
+  formData.append('description', description.value);
+  formData.append('type', type.value);
+  // Si l'utilisateur a rentré une URL manuelle, on l'envoie aussi
+  formData.append('url', url.value);
+  formData.append('content', content.value);
+  formData.append('tags', tags.value);
 
-const res = await fetch('http://localhost:3000/api/media', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(data)
-});
+  if (selectedFile.value) {
+    formData.append('file', selectedFile.value);
+  }
 
+  try {
+    const res = await fetch('http://localhost:3000/api/media', {
+      method: 'POST',
+      // Ne PAS mettre 'Content-Type': 'application/json' avec FormData, 
+      // le navigateur le gère tout seul (multipart/form-data)
+      body: formData
+    });
 
-  if (res.ok) {
-    alert("Œuvre ajoutée !");
-    router.push('/');
-  } else {
-    alert("Erreur lors de l'ajout");
+    if (res.ok) {
+      const result = await res.json();
+      console.log("Success:", result);
+      alert("Œuvre ajoutée !");
+      router.push('/');
+    } else {
+      const err = await res.json();
+      alert("Erreur : " + (err.error || "Erreur inconnue"));
+    }
+  } catch (error) {
+    console.error("Erreur réseau:", error);
+    alert("Erreur de connexion au serveur");
   }
 }
 </script>
@@ -43,7 +60,7 @@ const res = await fetch('http://localhost:3000/api/media', {
   <form @submit.prevent="submit">
 
     <label>Titre :</label>
-    <input v-model="title">
+    <input v-model="title" required>
 
     <label>Description :</label>
     <textarea v-model="description"></textarea>
@@ -56,14 +73,19 @@ const res = await fetch('http://localhost:3000/api/media', {
       <option value="text">Texte</option>
     </select>
 
-    <label>URL :</label>
-    <input v-model="url">
+    <!-- Choix : soit une URL externe, soit un fichier -->
+    <div style="margin: 10px 0; border: 1px solid #ccc; padding: 10px;">
+        <p><strong>Image / Média :</strong></p>
+        
+        <label>Téléverser un fichier :</label>
+        <input type="file" @change="handleFileUpload">
+    </div>
 
-    <label>Contenu textuel :</label>
+    <label>Contenu textuel (optionnel) :</label>
     <textarea v-model="content"></textarea>
 
     <label>Tags (séparés par virgules) :</label>
-    <input v-model="tags">
+    <input v-model="tags" placeholder="art, nature, projet...">
 
     <button type="submit">Ajouter</button>
   </form>
