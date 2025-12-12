@@ -1,32 +1,182 @@
 <script setup>
-import { ref, onMounted } from "vue";
-import axios from "axios";
-import { useRouter } from "vue-router";
+import { ref, watch } from "vue";
+import { useUserStore } from "@/stores/user";
+import Chat from "@/components/Chat.vue";
+import api from "@/api/axios";
+import { useChatStore } from "@/stores/chat";
+import { useRoute } from "vue-router";
 
-const users = ref([]);
-const router = useRouter();
+const route = useRoute();
 
-onMounted(async () => {
-  const res = await axios.get("/auth/users"); // liste des users
-  users.value = res.data;
-});
+
+const chatStore = useChatStore();
+
+
+const conversations = ref([]);
+const activeUserId = ref(null);
+const userStore = useUserStore();
+
+// charger les conversations quand l'utilisateur est prêt
+watch(
+  () => userStore.user,
+  async (user) => {
+    if (!user) return;
+    const res = await api.get("/messages/conversations");
+    conversations.value = res.data;
+  },
+  { immediate: true }
+);
+
+watch(
+  () => chatStore.lastMessage,
+  (msg) => {
+    if (!msg || !userStore.user) return;
+
+    const myId = userStore.user.user_id;
+
+    // 👉 identifier l'autre utilisateur de la conversation
+    const otherUserId =
+      msg.sender_id === myId ? msg.receiver_id : msg.sender_id;
+
+    const index = conversations.value.findIndex(
+      (c) => c.user_id === otherUserId
+    );
+
+    const updatedConversation = {
+      user_id: otherUserId,
+      username: conversations.value[index]?.username,
+      avatar: conversations.value[index]?.avatar,
+      last_message: msg.content,
+last_date: msg.created_at ?? new Date().toISOString()
+    };
+
+    // 🔥 si la conversation existe déjà → on la retire
+    if (index !== -1) {
+      conversations.value.splice(index, 1);
+    }
+
+    // 🔥 on la remet en haut
+    conversations.value.unshift(updatedConversation);
+  }
+);
+
+watch(
+  () => route.query.userId,
+  (id) => {
+    if (id) {
+      activeUserId.value = Number(id);
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => chatStore.lastMessage,
+  async (msg) => {
+    if (!msg || !userStore.user) return;
+
+    const myId = userStore.user.user_id;
+
+    const otherUserId =
+      msg.sender_id === myId ? msg.receiver_id : msg.sender_id;
+
+    const index = conversations.value.findIndex(
+      (c) => c.user_id === otherUserId
+    );
+
+    let username;
+    let avatar;
+
+    // 🟢 CAS 1 : la conversation existe déjà
+    if (index !== -1) {
+      username = conversations.value[index].username;
+      avatar = conversations.value[index].avatar;
+
+      conversations.value.splice(index, 1);
+    }
+    // 🔥 CAS 2 : NOUVELLE conversation → on fetch l'utilisateur
+    else {
+      const res = await api.get(`/auth/users/${otherUserId}`);
+      username = res.data.username;
+      avatar = res.data.avatar;
+    }
+
+    const updatedConversation = {
+      user_id: otherUserId,
+      username,
+      avatar,
+      last_message: msg.content,
+      last_date: msg.created_at ?? new Date().toISOString(),
+    };
+
+    conversations.value.unshift(updatedConversation);
+  }
+);
+
+
 
 const openChat = (userId) => {
-  router.push(`/messagerie/${userId}`);
+  activeUserId.value = userId;
 };
+const formatDate = (date) => {
+  return new Date(date).toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Paris", // ✅
+  });
+};
+
+
+
 </script>
 
 <template>
-  <div>
-    <h1>Messagerie</h1>
+  <div class="flex h-[calc(100vh-80px)] bg-white">
 
-    <ul>
-      <li v-for="u in users" :key="u.user_id">
-        {{ u.username }}
-        <button @click="openChat(u.user_id)">
-          Message
-        </button>
-      </li>
-    </ul>
+    <!-- COLONNE GAUCHE -->
+    <aside class="w-72 border-r overflow-y-auto">
+      <div class="p-4 font-semibold">Messages</div>
+
+      <div
+        v-for="c in conversations"
+        :key="c.user_id"
+        @click="openChat(c.user_id)"
+        class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-100"
+      >
+        <img
+          class="w-10 h-10 rounded-full object-cover"
+          :src="c.avatar || '/avatar.png'"
+        />
+
+        <div class="flex-1 min-w-0">
+          <div class="flex justify-between items-center">
+            <div class="font-medium truncate">
+              {{ c.username }}
+            </div>
+            <div class="text-xs text-gray-400">
+              {{ formatDate(c.last_date) }}
+            </div>
+          </div>
+
+          <div class="text-xs text-gray-500 truncate">
+            {{ c.last_message }}
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- COLONNE DROITE -->
+    <Chat
+      v-if="activeUserId"
+      :receiverId="activeUserId"
+    />
+
+    <div
+      v-else
+      class="flex-1 flex items-center justify-center text-gray-400"
+    >
+      Sélectionne une conversation
+    </div>
+
   </div>
 </template>

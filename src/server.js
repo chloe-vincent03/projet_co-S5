@@ -85,20 +85,39 @@ io.on("connection", (socket) => {
   });
 
   //  Le client envoie un message
-  socket.on("message", (data) => {
-    const { sender_id, receiver_id, content } = data;
+socket.on("message", (data) => {
+  const { sender_id, receiver_id, content } = data;
 
-    // enregistrer en DB
-    db.getDB().run(
-      `INSERT INTO Messages (sender_id, receiver_id, content, created_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [sender_id, receiver_id, content]
-    );
+  const createdAt = new Date().toISOString(); // 🔥 UTC UNIQUE
 
-    // envoyer au receveur + renvoyer à l'envoyeur
-    io.to(`user:${receiver_id}`).emit("message", data);
-    io.to(`user:${sender_id}`).emit("message", data);
-  });
+  // 1️⃣ enregistrer en DB (UTC)
+  db.getDB().run(
+    `
+    INSERT INTO Messages (sender_id, receiver_id, content, created_at)
+    VALUES (?, ?, ?, ?)
+    `,
+    [sender_id, receiver_id, content, createdAt],
+    function (err) {
+      if (err) {
+        console.error("❌ Erreur insert message:", err);
+        return;
+      }
+
+      // 2️⃣ message COMPLET envoyé au client
+      const savedMessage = {
+        id: this.lastID,
+        sender_id,
+        receiver_id,
+        content,
+        created_at: createdAt, // 🔥 LA CLÉ
+      };
+
+      // 3️⃣ émettre au receveur + à l’envoyeur
+      io.to(`user:${receiver_id}`).emit("message", savedMessage);
+      io.to(`user:${sender_id}`).emit("message", savedMessage);
+    }
+  );
+});
 
   socket.on("disconnect", () => {
     console.log("client déconnecté :", socket.id);

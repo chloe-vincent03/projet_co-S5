@@ -62,10 +62,9 @@
 <script setup>
 import { ref } from "vue";
 import { useUserStore } from "../stores/user"
-
-import axios from "axios";
 import { useRouter } from "vue-router";
 import MyButton from "@/components/MyButton.vue";
+import api from "@/api/axios";
 
 const router = useRouter();
 const store = useUserStore()
@@ -77,7 +76,7 @@ const errorMessage = ref("");
 
 async function loginUser() {
   try {
-    const res = await axios.post("http://localhost:3000/api/auth/login", {
+    const res = await api.post("http://localhost:3000/api/auth/login", {
       email: email.value,
       password: password.value,
     }, { withCredentials: true });

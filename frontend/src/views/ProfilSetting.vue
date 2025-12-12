@@ -131,9 +131,9 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useUserStore } from "../stores/user";
-import axios from "axios";
 import { useRouter } from "vue-router";
 import MyButton from "@/components/MyButton.vue";
+import api from "@/api/axios";
 
 const store = useUserStore();
 const router = useRouter();
@@ -192,7 +192,7 @@ function resetForm() {
 
 async function saveChanges() {
   try {
-    const res = await axios.put(
+    const res = await api.put(
       "http://localhost:3000/api/auth/update-profile",
       form.value,
       { withCredentials: true }

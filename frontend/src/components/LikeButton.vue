@@ -1,6 +1,6 @@
 <script setup>
-import axios from "axios";
 import { useUserStore } from "@/stores/user";
+import api from "@/api/axios";
 const userStore = useUserStore();
 
 const props = defineProps({
@@ -21,11 +21,11 @@ async function toggleLike() {
 
   try {
     if (media.is_liked) {
-      await axios.delete(`/media/${media.id}/like`);
+      await api.delete(`/media/${media.id}/like`);
       media.is_liked = false;
       media.likes_count = Math.max(0, media.likes_count - 1);
     } else {
-      await axios.post(`/media/${media.id}/like`);
+      await api.post(`/media/${media.id}/like`);
       media.is_liked = true;
       media.likes_count++;
     }
