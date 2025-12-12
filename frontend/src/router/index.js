@@ -28,6 +28,7 @@ const routes = [
     meta: { guestOnly: true },
   },
   { path: "/oeuvre/:id", component: Details },
+  { path: "/oeuvre/edit/:id", component: () => import("@/views/EditMedia.vue") }, 
   { path: "/ajouter", component: AddMedia },
   { path: "/profil", component: Profil, meta: { requiresAuth: true } },
   {

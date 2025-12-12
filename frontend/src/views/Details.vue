@@ -1,19 +1,34 @@
 <script setup>
 import MyButton from "@/components/MyButton.vue";
-import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { ref, onMounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useUserStore } from "@/stores/user";
 
 const route = useRoute();
+const router = useRouter(); // Pour la redirection après suppression
 const item = ref(null);
+const userStore = useUserStore();
 
+// Calculer si l'utilisateur connecté est le propriétaire
+const isOwner = computed(() => {
+  if (!item.value || !userStore.user) return false;
+  return item.value.user_id === userStore.user.user_id;
+});
+
+// Récupérer l'utilisateur courant au montage (au cas où on refresh la page)
 onMounted(async () => {
+    // On s'assure d'avoir l'info user
+    if (!userStore.user) {
+        await userStore.fetchUser();
+    }
+
   try {
     const res = await fetch(
       `http://localhost:3000/api/media/${route.params.id}`
     );
 
     const txt = await res.text();
-    console.log("Réponse brute :", txt); // 👈 IMPORTANT
+    console.log("Réponse brute :", txt); 
 
     if (!res.ok) throw new Error(`Erreur HTTP : ${res.status}`);
 
@@ -23,6 +38,28 @@ onMounted(async () => {
     console.error("Erreur lors du fetch :", err);
   }
 });
+
+async function deleteItem() {
+  if (!confirm("Voulez-vous vraiment supprimer cette œuvre ?")) return;
+
+  try {
+    const res = await fetch(`http://localhost:3000/api/media/${item.value.id}`, {
+      method: "DELETE",
+      credentials: "include" // Important pour l'auth
+    });
+
+    if (res.ok) {
+        alert("Œuvre supprimée !");
+        router.push('/');
+    } else {
+        const err = await res.json();
+        alert("Erreur : " + (err.error || "Impossible de supprimer"));
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Erreur réseau");
+  }
+}
 </script>
 
 <template>
@@ -132,6 +169,29 @@ onMounted(async () => {
 Voir le profil    </MyButton>
 
         </div>
+
+        <!-- ZONE BOUTONS PROPRIÉTAIRE -->
+        <div v-if="isOwner" class="border-t pt-4 mt-4 flex gap-4">
+            <MyButton 
+                :to="`/oeuvre/edit/${item.id}`"
+                size="small"
+                font="inter"
+                icon="setting"
+                variant="jaune" 
+            >
+                Modifier
+            </MyButton>
+
+            <MyButton 
+                variant="rouge" 
+                size="small" 
+                icon="delete" 
+                @click="deleteItem"
+            >
+                Supprimer l'œuvre
+            </MyButton>
+        </div>
+
       </div>
 
       <!-- COLONNE DROITE (bouton collaborer desktop) -->
