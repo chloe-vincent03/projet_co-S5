@@ -78,7 +78,7 @@ router.get('/:id', optionalAuth, (req, res) => {
 // -----------------------------
 import multer from 'multer';
 import mime from 'mime-types';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 // Configuration Multer & S3 (Cloudflare R2)
 const upload = multer({ storage: multer.memoryStorage() });
@@ -279,14 +279,33 @@ router.delete('/:id', authenticateSession, (req, res) => {
     // 2. Supprimer de la base
     // Note: Le "ON DELETE CASCADE" dans media_tags s'occupe des liens, 
     // mais pour 'likes' il faut vérifier si on a mis une cascade ou non.
-    // Supposons que SQLite gère les FK si activé, sinon on fait simple.
 
-    // (Optionnel) Ici, on pourrait aussi supprimer le fichier sur R2 avec s3.send(new DeleteObjectCommand(...))
-    // Pour l'instant on supprime juste l'entrée DB comme demandé.
+    // Suppression sur R2 si une URL existe
+    if (row.url) {
+      try {
+        // On essaie d'extraire la clé "src/..." de l'URL
+        // L'URL est souvent encodée (src%2F...), donc on decode d'abord
+        const decodedUrl = decodeURIComponent(row.url);
+        // On cherche la partie qui commence par 'src/'
+        const match = decodedUrl.match(/(src\/.*)$/);
+
+        if (match && match[1]) {
+          const key = match[1];
+          console.log("Suppression R2 pour la clé :", key);
+
+          s3.send(new DeleteObjectCommand({
+            Bucket: BUCKET,
+            Key: key
+          })).catch(err => console.error("Erreur suppression R2 (async) :", err));
+        }
+      } catch (e) {
+        console.error("Erreur extraction clé R2 :", e);
+      }
+    }
 
     db.run(`DELETE FROM media WHERE id = ?`, [mediaId], (err) => {
       if (err) return res.status(500).json({ error: "Erreur lors de la suppression" });
-      res.json({ message: "Œuvre supprimée avec succès" });
+      res.json({ message: "Œuvre et fichier supprimés avec succès" });
     });
   });
 });
