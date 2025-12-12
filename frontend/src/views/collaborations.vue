@@ -1,9 +1,43 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import MyButton from "@/components/MyButton.vue";
 
 const threads = ref([]);
 const isLoading = ref(true);
+
+const sort = ref('date-desc');
+const filterType = ref('all');
+const filterTags = ref('');
+
+const filteredThreads = computed(() => {
+  let items = [...threads.value];
+
+  // Filtrer par type (du parent)
+  if (filterType.value !== 'all') {
+    items = items.filter(i => i.type === filterType.value);
+  }
+
+  // Filtrer par tags (si le parent a des tags)
+  // Note: Pour l'instant le backend ne renvoie pas les tags dans /threads, on filtre sur le titre/description si pas de tags
+  if (filterTags.value.trim() !== "") {
+    const search = filterTags.value.toLowerCase();
+    items = items.filter(i => 
+      (i.title && i.title.toLowerCase().includes(search)) || 
+      (i.description && i.description.toLowerCase().includes(search))
+    );
+  }
+
+  // Trier
+  items.sort((a, b) => {
+    if (sort.value === 'date-desc') return new Date(b.created_at) - new Date(a.created_at);
+    if (sort.value === 'date-asc') return new Date(a.created_at) - new Date(b.created_at);
+    if (sort.value === 'title-asc') return a.title.localeCompare(b.title);
+    if (sort.value === 'title-desc') return b.title.localeCompare(a.title);
+    return 0;
+  });
+
+  return items;
+});
 
 onMounted(async () => {
   try {
@@ -21,14 +55,43 @@ onMounted(async () => {
 
 <template>
   <div class="px-8 lg:px-12 py-12">
-    <h1 class="text-4xl font-['PlumePixel'] mb-12 text-center text-blue-plumepixel">Galerie des Collaborations</h1>
+    <h1 class="text-4xl font-['PlumePixel'] mb-8 text-center text-blue-plumepixel">Galerie des Collaborations</h1>
+
+    <!-- FILTRES -->
+    <div class="flex flex-wrap items-center justify-center gap-4 mb-12">
+        <div class="flex items-center gap-2">
+            <label class="text-sm font-medium">Trier :</label>
+            <select v-model="sort" class="border px-2 py-1 rounded text-sm bg-white">
+                <option value="date-desc">Du + récent au + ancien</option>
+                <option value="date-asc">Du + ancien au + récent</option>
+                <option value="title-asc">Titre A → Z</option>
+                <option value="title-desc">Titre Z → A</option>
+            </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <label class="text-sm font-medium">Nature :</label>
+            <select v-model="filterType" class="border px-2 py-1 rounded text-sm bg-white">
+                <option value="all">Tous</option>
+                <option value="image">Images</option>
+                <option value="audio">Audio</option>
+                <option value="video">Vidéos</option>
+                <option value="text">Récit</option>
+            </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+             <label class="text-sm font-medium">Recherche :</label>
+             <input type="text" v-model="filterTags" class="border px-2 py-1 rounded text-sm" placeholder="Titre, description...">
+        </div>
+    </div>
 
     <div v-if="isLoading" class="text-center">Chargement...</div>
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       
       <!-- CARTE (Thread) -->
-      <div v-for="thread in threads" :key="thread.id" class="border border-blue-500 p-2 flex flex-col gap-2 bg-white shadow-sm hover:shadow-md transition">
+      <div v-for="thread in filteredThreads" :key="thread.id" class="border border-blue-500 p-2 flex flex-col gap-2 bg-white shadow-sm hover:shadow-md transition">
         
         <!-- PARTIE HAUTE : Images -->
         <div class="flex gap-2 h-48">
@@ -76,8 +139,8 @@ onMounted(async () => {
 
     </div>
     
-    <div v-if="!isLoading && threads.length === 0" class="text-center text-gray-500 mt-12">
-        Pas encore de collaborations.
+    <div v-if="!isLoading && filteredThreads.length === 0" class="text-center text-gray-500 mt-12">
+        Aucune collaboration ne correspond à votre recherche.
     </div>
 
   </div>
