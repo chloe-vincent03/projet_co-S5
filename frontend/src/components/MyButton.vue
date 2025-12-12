@@ -28,6 +28,7 @@ const variants = {
   default: "text-white",
   rouge: "bg-red-500 text-white",
   transparent: "bg-transparent border ",
+  jaune: "bg-yellow-500 text-white",
 };
 
 const sizes = {

@@ -171,7 +171,17 @@ Voir le profil    </MyButton>
         </div>
 
         <!-- ZONE BOUTONS PROPRIÉTAIRE -->
-        <div v-if="isOwner" class="border-t pt-4 mt-4">
+        <div v-if="isOwner" class="border-t pt-4 mt-4 flex gap-4">
+            <MyButton 
+                :to="`/oeuvre/edit/${item.id}`"
+                size="small"
+                font="inter"
+                icon="setting"
+                variant="jaune" 
+            >
+                Modifier
+            </MyButton>
+
             <MyButton 
                 variant="rouge" 
                 size="small" 

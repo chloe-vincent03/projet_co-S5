@@ -292,4 +292,116 @@ router.delete('/:id', authenticateSession, (req, res) => {
 });
 
 
+// -----------------------------
+// Modifier une œuvre
+// -----------------------------
+
+router.put('/:id', authenticateSession, upload.single('file'), async (req, res) => {
+  const mediaId = req.params.id;
+  const userId = req.user.user_id; // L'utilisateur connecté
+  const { title, description, content, tags } = req.body;
+  let url = req.body.url;
+  let type = req.body.type; // On peut récupérer le type si envoyé, sinon on le déduit du fichier
+
+  // 1. Vérifier si l'œuvre existe et appartient à l'utilisateur
+  const checkSql = `SELECT user_id, url, type FROM media WHERE id = ?`;
+
+  db.get(checkSql, [mediaId], async (err, row) => {
+    if (err) return res.status(500).json({ error: "Erreur base de données" });
+    if (!row) return res.status(404).json({ error: "Œuvre introuvable" });
+
+    // Vérification droits (Propriétaire uniquement pour l'édition)
+    if (row.user_id !== userId) {
+      return res.status(403).json({ error: "Action non autorisée" });
+    }
+
+    // Gestion de l'upload si nouveau fichier
+    if (req.file) {
+      try {
+        const originalName = req.file.originalname;
+        const key = `src/${Date.now()}-${originalName.replace(/\s/g, '_')}`;
+        const contentType = req.file.mimetype || mime.lookup(originalName) || 'application/octet-stream';
+
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET,
+          Key: key,
+          Body: req.file.buffer,
+          ContentType: contentType
+        }));
+
+        // Nouvelle URL
+        url = PUBLIC_BASE
+          ? `${PUBLIC_BASE}/${encodeURIComponent(key)}`
+          : `https://${BUCKET}.${ACCOUNT_ID}.r2.cloudflarestorage.com/${encodeURIComponent(key)}`;
+
+        // Mise à jour du type en fonction du nouveau fichier
+        // Simple détection basée sur le mimetype (image/png -> image)
+        const mimeType = req.file.mimetype || '';
+        if (mimeType.startsWith('image/')) type = 'image';
+        else if (mimeType.startsWith('video/')) type = 'video';
+        else if (mimeType.startsWith('audio/')) type = 'audio';
+        else type = 'text'; // Fallback
+
+      } catch (err) {
+        console.error("Erreur R2:", err);
+        return res.status(500).json({ error: "Erreur upload R2: " + err.message });
+      }
+    } else {
+      // Si pas de fichier, on garde l'URL et le type existants s'ils ne sont pas fournis
+      if (!url) url = row.url;
+      if (!type) type = row.type;
+    }
+
+    // 2. Mise à jour de la table media
+    const updateSql = `
+      UPDATE media 
+      SET title = ?, description = ?, content = ?, url = ?, type = ?
+      WHERE id = ?
+    `;
+
+    db.run(updateSql, [title, description, content, url, type, mediaId], function (err) {
+      if (err) return res.status(500).json({ error: "Erreur lors de la mise à jour" });
+
+      // 3. Mise à jour des tags (Suppression des anciens -> Ajout des nouveaux)
+      // On le fait dans une transaction implicite ou juste séquentiellement
+      db.run(`DELETE FROM media_tags WHERE media_id = ?`, [mediaId], (err) => {
+        if (err) console.error("Erreur suppression tags:", err);
+
+        // Si pas de nouveaux tags, on s'arrête là
+        let tagsArray = [];
+        if (tags) {
+          tagsArray = Array.isArray(tags) ? tags : tags.split(',');
+        }
+        const cleanedTags = tagsArray.map(t => t.trim()).filter(t => t.length > 0);
+
+        if (cleanedTags.length === 0) {
+          return res.json({ message: "Œuvre modifiée avec succès" });
+        }
+
+        let completed = 0;
+        cleanedTags.forEach(tag => {
+          db.run(`INSERT OR IGNORE INTO tags (name) VALUES (?)`, [tag], (err) => {
+            if (err) console.error(err);
+            db.get(`SELECT id FROM tags WHERE name = ?`, [tag], (err, row) => {
+              if (!err && row) {
+                db.run(`INSERT INTO media_tags (media_id, tag_id) VALUES (?, ?)`, [mediaId, row.id], checkDone);
+              } else {
+                checkDone();
+              }
+            });
+          });
+        });
+
+        function checkDone() {
+          completed++;
+          if (completed === cleanedTags.length) {
+            res.json({ message: "Œuvre modifiée avec succès" });
+          }
+        }
+      });
+    });
+  });
+});
+
+
 export default router;
