@@ -9,6 +9,8 @@ import Profil from "@/views/profil/index.vue";
 import { useUserStore } from "../stores/user";
 import ProfilSetting from "@/views/ProfilSetting.vue";
 import ProfilPublic from "@/views/profil/[id].vue";
+import Messagerie from "@/views/messagerie.vue";
+import Chat from "@/views/Chat.vue";
 
 
 const routes = [
@@ -38,6 +40,20 @@ const routes = [
     path: "/profil/settings",
     name: "ProfilSettings",
     component: ProfilSetting,
+    meta: { requiresAuth: true },
+  },
+
+  {
+    path: "/messagerie",
+    name: "messagerie",
+    component: Messagerie,
+    meta: { requiresAuth: true },
+  },
+
+  {
+    path: "/messagerie/:userId",
+    name: "Chat",
+    component: Chat,
     meta: { requiresAuth: true },
   },
 ];

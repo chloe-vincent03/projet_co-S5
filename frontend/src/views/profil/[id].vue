@@ -1,7 +1,8 @@
 <script setup>
-import { ref } from "vue";
+import router from "@/router";
+import { ref, watch } from "vue";
 import { useRoute } from "vue-router";
-
+import axios from "axios";
 const route = useRoute();
 const user = ref(null);
 const medias = ref([]);
@@ -17,6 +18,30 @@ const resMedia = await fetch(
 medias.value = await resMedia.json();
 
 const activeTab = ref("galerie"); // "galerie" ou "collab"
+
+// 🔁 Réagir AU PARAMÈTRE D’URL
+watch(
+  () => route.params.id,
+  async (id) => {
+    if (!id) return;
+
+    try {
+      const res = await axios.get(`/auth/users/${id}`);
+      user.value = res.data;
+    } catch (err) {
+      console.error("Erreur chargement user :", err);
+    }
+  },
+  { immediate: true } // 🔥 remplace onMounted
+);
+
+// 🔹 Aller au chat avec cet utilisateur
+const goToChat = () => {
+  const userId = Number(route.params.id);
+  if (!userId) return;
+
+  router.push({ name: "Chat", params: { userId } });
+};
 
 </script>
 
@@ -62,6 +87,17 @@ const activeTab = ref("galerie"); // "galerie" ou "collab"
   >
     Collaborations
   </button>
+   <div v-if="user">
+    <h1>{{ user.username }}</h1>
+
+    <button @click="goToChat">
+      Envoyer un message
+    </button>
+  </div>
+
+  <div v-else>
+    Chargement du profil…
+  </div>
 
 </div>
 
