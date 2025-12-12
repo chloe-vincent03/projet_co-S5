@@ -13,9 +13,11 @@ CREATE TABLE media (
     content TEXT,                -- pour les textes
 
     user_id INTEGER,             -- créateur de l’œuvre
+    parent_id INTEGER,           -- pour la collaboration (réponse à une œuvre)
     created_at TEXT DEFAULT (datetime('now')),
 
-    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (parent_id) REFERENCES media(id) ON DELETE SET NULL
 );
 
 -- Table des tags

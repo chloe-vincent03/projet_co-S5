@@ -66,7 +66,21 @@ router.get('/:id', optionalAuth, (req, res) => {
       tags: row.tags ? row.tags.split(',') : []
     };
 
-    res.json(media);
+    // Récupérer les collaborations (enfants)
+    const collabsSql = `
+      SELECT id, title, type, url, created_at, user_id 
+      FROM media 
+      WHERE parent_id = ? 
+      ORDER BY created_at ASC
+    `;
+
+    db.all(collabsSql, [id], (err, children) => {
+      if (err) console.error("Erreur récup collabs:", err);
+
+      // On ajoute la liste des collaborations à l'objet retourné
+      media.collaborations = children || [];
+      res.json(media);
+    });
   });
 });
 
@@ -145,12 +159,15 @@ router.post('/', authenticateSession, upload.single('file'), async (req, res) =>
 
   // Insertion en base avec user_id
   const insertMediaSql = `
-    INSERT INTO media (title, description, type, url, content, user_id)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO media (title, description, type, url, content, user_id, parent_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
 
   // Note: on utilise 'url' qui a été potentiellement mis à jour
-  db.run(insertMediaSql, [title, description, type, url, content, userId], function (err) {
+  // parent_id peut être null ou un ID
+  const parentId = req.body.parent_id || null;
+
+  db.run(insertMediaSql, [title, description, type, url, content, userId, parentId], function (err) {
     if (err) return res.status(500).json({ error: err.message });
 
     const mediaId = this.lastID;

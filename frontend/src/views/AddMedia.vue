@@ -1,8 +1,9 @@
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 
 const title = ref('');
 const description = ref('');
@@ -11,6 +12,22 @@ const url = ref('');
 const content = ref('');
 const tags = ref('');
 const selectedFile = ref(null);
+const parentTitle = ref('');
+
+onMounted(async () => {
+    // Si on répond à une œuvre, on récupère son titre pour l'affichage
+    if (route.query.parent_id) {
+        try {
+            const res = await fetch(`http://localhost:3000/api/media/${route.query.parent_id}`);
+            if (res.ok) {
+                const data = await res.json();
+                parentTitle.value = data.title;
+            }
+        } catch (e) {
+            console.error("Erreur récup parent", e);
+        }
+    }
+});
 
 function handleFileUpload(event) {
   selectedFile.value = event.target.files[0];
@@ -25,6 +42,12 @@ async function submit() {
   formData.append('url', url.value);
   formData.append('content', content.value);
   formData.append('tags', tags.value);
+  
+  // Gestion de la collaboration (parent_id)
+  const parentId = route.query.parent_id;
+  if (parentId) {
+    formData.append('parent_id', parentId);
+  }
 
   if (selectedFile.value) {
     formData.append('file', selectedFile.value);
@@ -59,6 +82,9 @@ async function submit() {
 
 <template>
   <h1>Ajouter une œuvre</h1>
+  <div v-if="$route.query.parent_id" class="bg-blue-100 text-blue-800 p-2 rounded mb-4">
+    Collaborer sur "<strong>{{ parentTitle || ('#' + $route.query.parent_id) }}</strong>"
+  </div>
 
   <form @submit.prevent="submit">
 
