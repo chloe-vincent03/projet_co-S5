@@ -89,8 +89,9 @@ async function submit() {
       icon="voir"
       size="small"
       font="inter"
-      :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"
+      variant="default"
       class="mb-6"
+      :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"
     >
       Annuler
     </MyButton>
@@ -139,7 +140,7 @@ async function submit() {
              <input v-model="tags" class="border p-2 w-full rounded">
         </div>
 
-        <MyButton type="submit" size="large">
+        <MyButton type="submit" size="large" variant="default" :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }">
             Enregistrer les modifications
         </MyButton>
 
