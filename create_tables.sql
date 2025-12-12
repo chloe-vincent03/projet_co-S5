@@ -40,3 +40,12 @@ CREATE TABLE IF NOT EXISTS likes (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_id, media_id)
 );
+
+
+CREATE TABLE IF NOT EXISTS Messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  sender_id INTEGER NOT NULL,
+  receiver_id INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);

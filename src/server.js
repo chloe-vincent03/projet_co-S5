@@ -3,11 +3,14 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mediaRoutes from "./routes/media.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import messageRoutes from "./routes/message.routes.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import session from "express-session";
 import cookieParser from "cookie-parser";
-
+import http from "http";
+import { Server } from "socket.io";
+import db from "./config/database.js"; // pour enregistrer les messages
 
 dotenv.config();
 
@@ -55,16 +58,57 @@ app.use(
 // -----------------------------
 app.use("/api/media", mediaRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
+
 
 // -----------------------------
 // STATIC FILES
 // -----------------------------
 app.use(express.static(path.join(dirname, "public")));
 
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    credentials: true,
+  },
+});
+
+
+io.on("connection", (socket) => {
+  console.log("🟢 Client connecté :", socket.id);
+
+  //  Le client envoie son user_id pour rejoindre sa "room"
+  socket.on("register", (userId) => {
+    socket.join(`user:${userId}`);
+  });
+
+  //  Le client envoie un message
+  socket.on("message", (data) => {
+    const { sender_id, receiver_id, content } = data;
+
+    // enregistrer en DB
+    db.getDB().run(
+      `INSERT INTO Messages (sender_id, receiver_id, content, created_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [sender_id, receiver_id, content]
+    );
+
+    // envoyer au receveur + renvoyer à l'envoyeur
+    io.to(`user:${receiver_id}`).emit("message", data);
+    io.to(`user:${sender_id}`).emit("message", data);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("client déconnecté :", socket.id);
+  });
+});
+
 // -----------------------------
 // START SERVER
 // -----------------------------
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Serveur lancé sur http://localhost:${PORT}`);
+server.listen(PORT, () => {
+  console.log(`🚀 Serveur + Socket.io sur http://localhost:${PORT}`);
 });
