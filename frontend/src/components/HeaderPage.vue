@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { RouterLink } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import IconLogo from "@/components/icons/IconLogo.vue";
+import MyButton from "./MyButton.vue";
 
 const userStore = useUserStore();
 
@@ -32,40 +33,58 @@ const isLoggedIn = computed(() => userStore.isLoggedIn);
 
       <!-- NAVIGATION + LIENS (dans le même flex que le logo) -->
       <nav
-        class="fixed top-0 left-0 w-full h-screen bg-white flex flex-col items-center justify-center p-8 shadow-lg
-               lg:static lg:h-auto lg:w-auto lg:bg-transparent lg:p-0 lg:flex-row lg:items-center lg:justify-end lg:shadow-none
-               z-40"
+        class="fixed top-0 left-0 w-full h-screen bg-white flex flex-col items-center justify-center p-8 shadow-lg lg:static lg:h-auto lg:w-auto lg:bg-transparent lg:p-0 lg:flex-row lg:items-center lg:justify-end lg:shadow-none z-40"
         :class="menuOpen ? 'flex' : 'hidden lg:flex'"
       >
         <ul
-          class="flex flex-col gap-12 text-3xl text-center
-                 lg:flex-row lg:gap-8 lg:text-base lg:text-left lg:items-center"
+          class="flex flex-col gap-12 text-3xl text-center lg:flex-row lg:gap-8 lg:text-base lg:text-left lg:items-center"
         >
-          <li><RouterLink @click="closeMenu" to="/galerie">Galerie</RouterLink></li>
-          <li><RouterLink @click="closeMenu" to="/collaborations">Collaborations</RouterLink></li>
+          <li>
+            <RouterLink @click="closeMenu" to="/galerie">Galerie</RouterLink>
+          </li>
+          <li>
+            <RouterLink @click="closeMenu" to="/collaborations"
+              >Collaborations</RouterLink
+            >
+          </li>
 
           <template v-if="!isLoggedIn">
-            <li><RouterLink @click="closeMenu" to="/register">Inscription</RouterLink></li>
             <li>
-              <RouterLink
+              <MyButton
+                @click="closeMenu"
+                to="/register"
+                :style="{
+                  border: '2px solid var(--color-blue-plumepixel)',
+                  color: 'var(--color-blue-plumepixel)',
+                }"
+                variant="transparent"
+                >Inscription</MyButton
+              >
+            </li>
+            <li>
+              <MyButton
                 @click="closeMenu"
                 to="/login"
-                class="px-4 py-2 bg-blue-plumepixel text-white rounded-md"
+                :style="{
+                  backgroundColor: 'var(--color-blue-plumepixel)',
+                }"
               >
                 Connexion
-              </RouterLink>
+              </MyButton>
             </li>
           </template>
 
           <template v-else>
             <li>
-              <RouterLink
+              <MyButton
                 @click="closeMenu"
                 to="/profil"
-                class="px-4 py-2 bg-blue-plumepixel text-white rounded-md"
+                :style="{
+                  backgroundColor: 'var(--color-blue-plumepixel)',
+                }"
               >
                 Mon Profil
-              </RouterLink>
+              </MyButton>
             </li>
           </template>
         </ul>
@@ -95,5 +114,3 @@ const isLoggedIn = computed(() => userStore.isLoggedIn);
     </div>
   </header>
 </template>
-
-

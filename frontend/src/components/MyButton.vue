@@ -44,7 +44,7 @@ const fonts = {
 };
 
 const icons = {
-  settings: IconReglage,
+  setting: IconReglage,
   annuler: IconCroix,
   parcourir: IconParcourir,
   publier: IconPublier,

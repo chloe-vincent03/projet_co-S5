@@ -2,6 +2,7 @@
 import { useUserStore } from "../../stores/user";
 import { useRouter } from "vue-router";
 import { ref, computed } from "vue";
+import MyButton from "@/components/MyButton.vue";
 
 const store = useUserStore();
 const router = useRouter();
@@ -62,26 +63,22 @@ function goToSettings() {
       </div>
 
       <div class="flex flex-col sm:flex-row gap-4 mt-8">
-        <button
+        <MyButton
           @click="goToSettings"
-          class="px-6 py-2 bg-blue-plumepixel text-white rounded-lg shadow hover:bg-blue-700 transition"
+          icon="setting"
+        :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"
         >
           Paramètres
-        </button>
+        </MyButton>
 
-        <button
+        <MyButton
           @click="logout"
-          class="px-6 py-2 bg-gray-800 text-white rounded-lg shadow hover:bg-black transition"
-        >
+ :style="{
+          border: '2px solid var(--color-blue-plumepixel)',
+          color: 'var(--color-blue-plumepixel)',
+        }"        >
           Se déconnecter
-        </button>
-
-        <button
-          @click="deleteAcc"
-          class="px-6 py-2 bg-red-500 text-white rounded-lg shadow hover:bg-red-600 transition"
-        >
-          Supprimer mon compte
-        </button>
+        </MyButton>
       </div>
 
       <p

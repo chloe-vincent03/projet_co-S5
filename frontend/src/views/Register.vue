@@ -92,13 +92,13 @@
 
         <p v-if="errorMessage" class="text-red-600 text-sm">{{ errorMessage }}</p>
 
-        <button
+        <MyButton
           type="submit"
-          class="w-full bg-blue-plumepixel text-white font-semibold py-3 rounded-lg
-            hover:bg-blue-700 transition"
+        :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"
+         
         >
           S'inscrire
-        </button>
+        </MyButton>
 
       </form>
 
@@ -118,6 +118,7 @@
 import { ref } from "vue";
 import { useUserStore } from "../stores/user"; 
 import { useRouter } from "vue-router";
+import MyButton from "@/components/MyButton.vue";
 
 const store = useUserStore(); 
 const router = useRouter();
