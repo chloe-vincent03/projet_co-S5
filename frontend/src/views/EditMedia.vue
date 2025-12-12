@@ -45,7 +45,12 @@ onMounted(async () => {
   }
 });
 
+const isSubmitting = ref(false);
+
 async function submit() {
+  if (isSubmitting.value) return;
+  isSubmitting.value = true;
+
   const formData = new FormData();
   formData.append('title', title.value);
   formData.append('description', description.value);
@@ -69,7 +74,7 @@ async function submit() {
     });
 
     if (res.ok) {
-        alert("Modifications enregistrées !");
+        // alert("Modifications enregistrées !"); // On enlève l'alert pour fluidifier
         router.push(`/oeuvre/${route.params.id}`);
     } else {
         const err = await res.json();
@@ -78,6 +83,8 @@ async function submit() {
   } catch (error) {
     console.error("Erreur réseau:", error);
     alert("Erreur de connexion au serveur");
+  } finally {
+    isSubmitting.value = false;
   }
 }
 </script>
@@ -140,8 +147,16 @@ async function submit() {
              <input v-model="tags" class="border p-2 w-full rounded">
         </div>
 
-        <MyButton type="submit" size="large" variant="default" :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }">
-            Enregistrer les modifications
+        <MyButton 
+            type="submit" 
+            size="large" 
+            variant="default" 
+            :disabled="isSubmitting"
+            :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"
+        >
+            <span v-if="isSubmitting" class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2 inline-block"></span>
+            <span v-if="isSubmitting">Enregistrement...</span>
+            <span v-else>Enregistrer les modifications</span>
         </MyButton>
 
     </form>

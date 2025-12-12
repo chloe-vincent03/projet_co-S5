@@ -1,4 +1,5 @@
 <script setup>
+import MyButton from '@/components/MyButton.vue';
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 
@@ -33,7 +34,12 @@ function handleFileUpload(event) {
   selectedFile.value = event.target.files[0];
 }
 
-async function submit() {
+  const isSubmitting = ref(false);
+
+  async function submit() {
+  if (isSubmitting.value) return; 
+  isSubmitting.value = true;
+
   const formData = new FormData();
   formData.append('title', title.value);
   formData.append('description', description.value);
@@ -65,7 +71,7 @@ async function submit() {
     if (res.ok) {
       const result = await res.json();
       console.log("Success:", result);
-      alert("Œuvre ajoutée !");
+      // alert("Œuvre ajoutée !"); // On enlève l'alert pour fluidifier
       router.push('/');
     } else {
       const err = await res.json();
@@ -76,6 +82,8 @@ async function submit() {
   } catch (error) {
     console.error("Erreur réseau:", error);
     alert("Erreur de connexion au serveur");
+  } finally {
+    isSubmitting.value = false;
   }
 }
 </script>
@@ -116,6 +124,13 @@ async function submit() {
     <label>Tags (séparés par virgules) :</label>
     <input v-model="tags" placeholder="art, nature, projet...">
 
-    <button type="submit">Ajouter</button>
+    <MyButton type="submit" 
+            :disabled="isSubmitting"
+            :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"
+            variant="default">
+      <span v-if="isSubmitting" class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+      <span v-if="isSubmitting">Envoi en cours...</span>
+      <span v-else>Ajouter</span>
+    </MyButton>
   </form>
 </template>
