@@ -10,7 +10,6 @@ const store = useUserStore();
 const router = useRouter();
 
 
-
 const galleryData = ref([]);
 const sort = ref('date-desc');
 const filterType = ref('all');
@@ -20,8 +19,10 @@ async function loadGallery() {
   if (galleryData.value.length === 0) {
     const res = await axios.get("/media"); // <-- maintenant le cookie est envoyé
     galleryData.value = res.data;
+
   }
 }
+
 
 
 onMounted(loadGallery);
@@ -53,7 +54,6 @@ const filtered = computed(() => {
 
   return items;
 });
-
 
 
 </script>
