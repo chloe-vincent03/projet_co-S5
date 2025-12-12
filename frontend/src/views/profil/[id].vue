@@ -2,7 +2,7 @@
 import router from "@/router";
 import { ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import axios from "axios";
+import api from "@/api/axios";
 const route = useRoute();
 const user = ref(null);
 const medias = ref([]);
@@ -26,7 +26,7 @@ watch(
     if (!id) return;
 
     try {
-      const res = await axios.get(`/auth/users/${id}`);
+      const res = await api.get(`/auth/users/${id}`);
       user.value = res.data;
     } catch (err) {
       console.error("Erreur chargement user :", err);
@@ -35,13 +35,16 @@ watch(
   { immediate: true } // 🔥 remplace onMounted
 );
 
-// 🔹 Aller au chat avec cet utilisateur
 const goToChat = () => {
   const userId = Number(route.params.id);
   if (!userId) return;
 
-  router.push({ name: "Chat", params: { userId } });
+  router.push({
+    path: "/messagerie",
+    query: { userId },
+  });
 };
+
 
 </script>
 
