@@ -105,11 +105,12 @@ const PUBLIC_BASE = process.env.R2_PUBLIC_BASE;
 // -----------------------------
 // Ajouter un nouveau média avec tags (et upload fichier optionnel)
 // -----------------------------
-router.post('/', optionalAuth, upload.single('file'), async (req, res) => {
+router.post('/', authenticateSession, upload.single('file'), async (req, res) => {
   // Extraction des données classiques
   const { title, description, type, content, tags } = req.body;
   // L'URL peut venir soit du champ texte (si pas d'upload), soit sera générée
   let url = req.body.url || '';
+  const userId = req.user.user_id; // Récupéré via authenticateSession
 
   if (!title) {
     return res.status(400).json({ error: "Titre obligatoire" });
@@ -142,14 +143,14 @@ router.post('/', optionalAuth, upload.single('file'), async (req, res) => {
     }
   }
 
-  // Insertion en base
+  // Insertion en base avec user_id
   const insertMediaSql = `
-    INSERT INTO media (title, description, type, url, content)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO media (title, description, type, url, content, user_id)
+    VALUES (?, ?, ?, ?, ?, ?)
   `;
 
   // Note: on utilise 'url' qui a été potentiellement mis à jour
-  db.run(insertMediaSql, [title, description, type, url, content], function (err) {
+  db.run(insertMediaSql, [title, description, type, url, content, userId], function (err) {
     if (err) return res.status(500).json({ error: err.message });
 
     const mediaId = this.lastID;

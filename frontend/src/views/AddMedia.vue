@@ -33,6 +33,7 @@ async function submit() {
   try {
     const res = await fetch('http://localhost:3000/api/media', {
       method: 'POST',
+      credentials: 'include', // 🔥 Important pour envoyer le cookie de session
       // Ne PAS mettre 'Content-Type': 'application/json' avec FormData, 
       // le navigateur le gère tout seul (multipart/form-data)
       body: formData
@@ -45,7 +46,9 @@ async function submit() {
       router.push('/');
     } else {
       const err = await res.json();
-      alert("Erreur : " + (err.error || "Erreur inconnue"));
+      console.error("Erreur serveur:", err);
+      // Gère les différents formats d'erreur (error, message, ou success:false+message)
+      alert("Erreur : " + (err.error || err.message || "Erreur inconnue"));
     }
   } catch (error) {
     console.error("Erreur réseau:", error);
