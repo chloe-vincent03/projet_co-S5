@@ -37,6 +37,55 @@ GROUP BY m.id
   });
 });
 
+router.get('/threads', optionalAuth, (req, res) => {
+  console.log("⚡ FETCHING THREADS...");
+  const sql = `
+    SELECT 
+      m.id, m.title, m.description, m.type, m.url, m.created_at, m.user_id,
+      u.username,
+      (SELECT COUNT(*) FROM media WHERE parent_id = m.id) as children_count
+    FROM media m
+    LEFT JOIN users u ON m.user_id = u.user_id
+    WHERE m.id IN (SELECT DISTINCT parent_id FROM media WHERE parent_id IS NOT NULL)
+    ORDER BY m.created_at DESC
+  `;
+
+  db.all(sql, [], async (err, parents) => {
+    if (err) {
+      console.error("SQL ERROR in threads:", err);
+      return res.status(500).json({ error: err.message });
+    }
+    console.log("Parents found:", parents ? parents.length : 0);
+
+    // Pour chaque parent, on va chercher ses enfants
+    // (Note: ce n'est pas le plus performant pour des milliers de lignes, mais ok pour commencer)
+    const threads = [];
+
+    for (const parent of parents) {
+      const childrenSql = `
+        SELECT id, title, type, url, created_at 
+        FROM media 
+        WHERE parent_id = ?
+        ORDER BY created_at ASC
+      `;
+
+      const children = await new Promise((resolve, reject) => {
+        db.all(childrenSql, [parent.id], (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+
+      threads.push({
+        ...parent,
+        children
+      });
+    }
+
+    res.json(threads);
+  });
+});
+
 router.get('/:id', optionalAuth, (req, res) => {
   const id = req.params.id;
 
