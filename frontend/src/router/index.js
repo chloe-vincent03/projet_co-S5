@@ -10,7 +10,8 @@ import { useUserStore } from "../stores/user";
 import ProfilSetting from "@/views/ProfilSetting.vue";
 import ProfilPublic from "@/views/profil/[id].vue";
 import Messagerie from "@/views/messagerie.vue";
-import Chat from "@/views/Chat.vue";
+import Chat from "@/views/chat.vue";
+import NotFound from "@/views/NotFound.vue";
 
 
 const routes = [
@@ -57,6 +58,12 @@ const routes = [
     name: "Chat",
     component: Chat,
     meta: { requiresAuth: true },
+  },
+  // 404 - DOIT ETRE EN DERNIER
+  {
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
+    component: NotFound
   },
 ];
 
