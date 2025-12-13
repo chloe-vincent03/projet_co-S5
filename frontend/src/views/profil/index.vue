@@ -122,6 +122,13 @@ function goToSettings() {
         Administrateur
       </p>
 
+      <!-- Badge Compte Privé/Public -->
+      <p class="mt-2 px-3 py-1 rounded text-sm w-fit font-medium"
+         :class="user?.is_private === 1 ? 'bg-gray-200 text-gray-700' : 'bg-green-100 text-green-700'"
+      >
+        {{ user?.is_private === 1 ? 'Compte Privé' : 'Compte Public' }}
+      </p>
+
       <!-- MESSAGE -->
       <p v-if="message" class="mt-4 text-red-600">{{ message }}</p>
 

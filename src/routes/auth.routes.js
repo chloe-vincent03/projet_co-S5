@@ -37,7 +37,7 @@ router.get("/users", (req, res) => {
 
 // REGISTER
 router.post("/register", async (req, res) => {
-  const { username, email, password, first_name, last_name, bio } = req.body;
+  const { username, email, password, first_name, last_name, bio, is_private } = req.body;
 
   if (!username || !email || !password)
     return res.status(400).json({
@@ -49,13 +49,13 @@ router.post("/register", async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
 
     const sql = `
-      INSERT INTO Users (username, email, password_hash, first_name, last_name, bio)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO Users (username, email, password_hash, first_name, last_name, bio, is_private)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
     db.getDB().run(
       sql,
-      [username, email, hashed, first_name, last_name, bio || ""],
+      [username, email, hashed, first_name, last_name, bio || "", is_private ? 1 : 0],
       function (err) {
         if (err)
           return res
@@ -87,7 +87,13 @@ router.post("/register", async (req, res) => {
 
 // UPDATE PROFILE
 router.put("/update-profile", authenticateSession, upload.single('avatar'), async (req, res) => {
-  const { username, email, bio, first_name, last_name } = req.body;
+  const { username, email, bio, first_name, last_name, is_private } = req.body;
+  console.log("🔐 Backend received is_private:", is_private, "Type:", typeof is_private);
+
+  // Convertir is_private en entier (gérer les strings "true"/"false" et les booléens)
+  const isPrivateValue = (is_private === true || is_private === 'true' || is_private === '1' || is_private === 1) ? 1 : 0;
+  console.log("🔐 Converted to:", isPrivateValue);
+
   let avatarUrl = null;
 
   // Gestion de l'upload de l'avatar
@@ -115,8 +121,8 @@ router.put("/update-profile", authenticateSession, upload.single('avatar'), asyn
   }
 
   // Construction de la requête SQL dynamique
-  let sql = `UPDATE Users SET username = ?, email = ?, bio = ?, first_name = ?, last_name = ?`;
-  const params = [username, email, bio, first_name, last_name];
+  let sql = `UPDATE Users SET username = ?, email = ?, bio = ?, first_name = ?, last_name = ?, is_private = ?`;
+  const params = [username, email, bio, first_name, last_name, isPrivateValue];
 
   if (avatarUrl) {
     sql += `, avatar = ?`;
@@ -184,7 +190,7 @@ router.post("/login", (req, res) => {
 // CURRENT USER
 router.get("/me", authenticateSession, (req, res) => {
   const sql = `
-    SELECT user_id, username, email, first_name, last_name, is_admin, bio, avatar, created_at
+    SELECT user_id, username, email, first_name, last_name, is_admin, is_private, bio, avatar, created_at
     FROM Users
     WHERE user_id = ?
   `;

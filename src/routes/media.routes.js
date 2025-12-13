@@ -23,9 +23,10 @@ SELECT
 (SELECT 1 FROM likes WHERE user_id = ? AND media_id = m.id) AS is_liked,
 (SELECT COUNT(*) FROM likes WHERE media_id = m.id) AS likes_count
 FROM media m
+LEFT JOIN Users u ON m.user_id = u.user_id
 LEFT JOIN media_tags mt ON m.id = mt.media_id
 LEFT JOIN tags t ON mt.tag_id = t.id
-WHERE m.is_public = 1
+WHERE m.is_public = 1 AND (u.is_private = 0 OR u.is_private IS NULL)
 GROUP BY m.id
 ORDER BY m.created_at DESC
   `;
@@ -189,88 +190,98 @@ router.post('/', authenticateSession, upload.single('file'), async (req, res) =>
     return res.status(400).json({ error: "Titre obligatoire" });
   }
 
-  // Si un fichier est uploadé, on l'envoie sur R2
-  if (req.file) {
-    try {
-      const originalName = req.file.originalname;
-      // Modification du dossier de destination : uploads -> src
-      const key = `src/${Date.now()}-${originalName.replace(/\s/g, '_')}`;
-      const contentType = req.file.mimetype || mime.lookup(originalName) || 'application/octet-stream';
+  // Vérifier si le compte est privé
+  const userCheckSql = `SELECT is_private FROM Users WHERE user_id = ?`;
+  db.get(userCheckSql, [userId], async (userErr, userRow) => {
+    if (userErr) return res.status(500).json({ error: "Erreur serveur" });
 
-      await s3.send(new PutObjectCommand({
-        Bucket: BUCKET,
-        Key: key,
-        Body: req.file.buffer,
-        ContentType: contentType
-      }));
+    // Si le compte est privé, forcer l'œuvre à être privée
+    const finalPublicVal = (userRow && userRow.is_private === 1) ? 0 : publicVal;
+    const finalCollabVal = (userRow && userRow.is_private === 1) ? 0 : collabVal;
 
-      // Construction de l'URL finale
-      url = PUBLIC_BASE
-        ? `${PUBLIC_BASE}/${encodeURIComponent(key)}`
-        : `https://${BUCKET}.${ACCOUNT_ID}.r2.cloudflarestorage.com/${encodeURIComponent(key)}`;
+    // Si un fichier est uploadé, on l'envoie sur R2
+    if (req.file) {
+      try {
+        const originalName = req.file.originalname;
+        // Modification du dossier de destination : uploads -> src
+        const key = `src/${Date.now()}-${originalName.replace(/\s/g, '_')}`;
+        const contentType = req.file.mimetype || mime.lookup(originalName) || 'application/octet-stream';
 
-    } catch (err) {
-      console.error("Erreur R2:", err);
-      // Retourne l'erreur exacte pour le débuggage
-      return res.status(500).json({ error: "Erreur upload R2: " + err.message });
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET,
+          Key: key,
+          Body: req.file.buffer,
+          ContentType: contentType
+        }));
+
+        // Construction de l'URL finale
+        url = PUBLIC_BASE
+          ? `${PUBLIC_BASE}/${encodeURIComponent(key)}`
+          : `https://${BUCKET}.${ACCOUNT_ID}.r2.cloudflarestorage.com/${encodeURIComponent(key)}`;
+
+      } catch (err) {
+        console.error("Erreur R2:", err);
+        // Retourne l'erreur exacte pour le débuggage
+        return res.status(500).json({ error: "Erreur upload R2: " + err.message });
+      }
     }
-  }
 
-  // Insertion en base avec user_id
-  const insertMediaSql = `
+    // Insertion en base avec user_id
+    const insertMediaSql = `
     INSERT INTO media (title, description, type, url, content, user_id, parent_id, is_public, allow_collaboration)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
-  // Note: on utilise 'url' qui a été potentiellement mis à jour
-  // parent_id peut être null ou un ID
-  const parentId = req.body.parent_id || null;
+    // Note: on utilise 'url' qui a été potentiellement mis à jour
+    // parent_id peut être null ou un ID
+    const parentId = req.body.parent_id || null;
 
-  db.run(insertMediaSql, [title, description, type, url, content, userId, parentId, publicVal, collabVal], function (err) {
-    if (err) return res.status(500).json({ error: err.message });
+    db.run(insertMediaSql, [title, description, type, url, content, userId, parentId, finalPublicVal, finalCollabVal], function (err) {
+      if (err) return res.status(500).json({ error: err.message });
 
-    const mediaId = this.lastID;
+      const mediaId = this.lastID;
 
-    // Gestion des tags
-    let tagsArray = [];
-    if (tags) {
-      // Si tags est une chaîne "tag1, tag2", on split. Si c'est déjà un array (rare avec FormData mais possible), on garde.
-      tagsArray = Array.isArray(tags) ? tags : tags.split(',');
-    }
+      // Gestion des tags
+      let tagsArray = [];
+      if (tags) {
+        // Si tags est une chaîne "tag1, tag2", on split. Si c'est déjà un array (rare avec FormData mais possible), on garde.
+        tagsArray = Array.isArray(tags) ? tags : tags.split(',');
+      }
 
-    if (!tagsArray || tagsArray.length === 0) {
-      return res.json({ message: "Œuvre ajoutée", id: mediaId, url });
-    }
+      if (!tagsArray || tagsArray.length === 0) {
+        return res.json({ message: "Œuvre ajoutée", id: mediaId, url });
+      }
 
-    let completed = 0;
-    // Nettoyage et filtrage des tags vides
-    const cleanedTags = tagsArray.map(t => t.trim()).filter(t => t.length > 0);
+      let completed = 0;
+      // Nettoyage et filtrage des tags vides
+      const cleanedTags = tagsArray.map(t => t.trim()).filter(t => t.length > 0);
 
-    if (cleanedTags.length === 0) {
-      return res.json({ message: "Œuvre ajoutée", id: mediaId, url });
-    }
+      if (cleanedTags.length === 0) {
+        return res.json({ message: "Œuvre ajoutée", id: mediaId, url });
+      }
 
-    cleanedTags.forEach(tag => {
-      db.run(`INSERT OR IGNORE INTO tags (name) VALUES (?)`, [tag], (err) => {
-        if (err) console.error(err);
-        db.get(`SELECT id FROM tags WHERE name = ?`, [tag], (err, row) => {
-          if (!err && row) {
-            db.run(`INSERT INTO media_tags (media_id, tag_id) VALUES (?, ?)`, [mediaId, row.id], checkDone);
-          } else {
-            checkDone();
-          }
+      cleanedTags.forEach(tag => {
+        db.run(`INSERT OR IGNORE INTO tags (name) VALUES (?)`, [tag], (err) => {
+          if (err) console.error(err);
+          db.get(`SELECT id FROM tags WHERE name = ?`, [tag], (err, row) => {
+            if (!err && row) {
+              db.run(`INSERT INTO media_tags (media_id, tag_id) VALUES (?, ?)`, [mediaId, row.id], checkDone);
+            } else {
+              checkDone();
+            }
+          });
         });
       });
-    });
 
-    function checkDone() {
-      completed++;
-      if (completed === cleanedTags.length) {
-        res.json({ message: "Œuvre ajoutée", id: mediaId, url });
+      function checkDone() {
+        completed++;
+        if (completed === cleanedTags.length) {
+          res.json({ message: "Œuvre ajoutée", id: mediaId, url });
+        }
       }
-    }
-  });
-});
+    });
+  }); // Fermeture du db.run pour insertMediaSql
+}); // Fermeture du db.get pour userCheckSql
 
 // GET all media for a specific user
 router.get("/user/:id", optionalAuth, (req, res) => {

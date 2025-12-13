@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS likes (
   user_id INTEGER NOT NULL,
   media_id INTEGER NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  is_private INTEGER DEFAULT 0,
   UNIQUE(user_id, media_id)
 );
 

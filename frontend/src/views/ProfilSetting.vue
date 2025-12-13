@@ -77,6 +77,23 @@
             class="w-full border border-black h-32 p-2 resize-none mb-5"
           ></textarea>
         </div>
+
+        <!-- Privacy Toggle -->
+        <div class="border-t pt-6 mt-6">
+          <h3 class="font-bold text-gray-800 mb-4">Confidentialité du compte</h3>
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div class="flex-1">
+              <label class="font-medium text-gray-700">Compte Privé</label>
+              <p class="text-sm text-gray-500 mt-1">
+                Rend toutes vos œuvres automatiquement privées
+              </p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" v-model="form.is_private" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+        </div>
       </div>
 
       <div class="flex flex-col items-end gap-3">
@@ -152,7 +169,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watchEffect } from "vue";
 import { useUserStore } from "../stores/user";
 import { useRouter } from "vue-router";
 import MyButton from "@/components/MyButton.vue";
@@ -196,17 +213,34 @@ const props = defineProps({
 
 // formulaire rempli avec les infos utilisateurs
 const form = ref({
-  username: user.value.username,
-  email: user.value.email,
-  bio: user.value.bio,
-  first_name: user.value.first_name,
-  last_name: user.value.last_name,
+  username: "",
+  email: "",
+  bio: "",
+  first_name: "",
+  last_name: "",
+  is_private: 0,
 });
 
-const originalData = ref({ ...user.value });
+const originalData = ref({});
 const fileInput = ref(null);
 const selectedFile = ref(null);
 const previewUrl = ref(null);
+
+// Initialiser le formulaire quand les données utilisateur sont chargées
+watchEffect(() => {
+  if (user.value) {
+    form.value = {
+      username: user.value.username || "",
+      email: user.value.email || "",
+      bio: user.value.bio || "",
+      first_name: user.value.first_name || "",
+      last_name: user.value.last_name || "",
+      is_private: user.value.is_private === 1,
+    };
+    originalData.value = { ...user.value };
+  }
+});
+
 
 function triggerFileInput() {
   fileInput.value.click();
@@ -243,6 +277,9 @@ async function saveChanges() {
     formData.append('bio', form.value.bio || "");
     formData.append('first_name', form.value.first_name || "");
     formData.append('last_name', form.value.last_name || "");
+    
+    console.log("🔐 Saving is_private:", form.value.is_private, "Type:", typeof form.value.is_private);
+    formData.append('is_private', form.value.is_private ? 1 : 0);
 
     if (selectedFile.value) {
         formData.append('avatar', selectedFile.value);
