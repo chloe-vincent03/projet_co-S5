@@ -148,28 +148,42 @@ function goToSettings() {
           v-for="m in galerie"
           :key="m.id"
           :to="`/oeuvre/${m.id}`"
-          class="block bg-gray-300 h-48 overflow-hidden"
         >
-          <img
-            v-if="m.type === 'image'"
-            :src="m.url"
-            class="w-full h-full object-cover"
-          />
+          <div class="aspect-square bg-gray-200 relative group overflow-hidden rounded-lg">
+             <!-- Badge Privé -->
+             <div v-if="!m.is_public" class="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10 flex items-center gap-1">
+                🔒 Privé
+             </div>
+             
+             <img 
+               v-if="m.type === 'image'" 
+               :src="m.url" 
+               class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+             >
 
-          <video
-            v-else-if="m.type === 'video'"
-            :src="m.url"
-            class="w-full h-full object-cover"
-            muted
-            autoplay
-            loop
-          ></video>
+             <video
+                v-else-if="m.type === 'video'"
+                :src="m.url"
+                class="w-full h-full object-cover"
+                muted
+                autoplay
+                loop
+             ></video>
 
-          <div
-            v-else
-            class="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-600"
-          >
-            {{ m.type.toUpperCase() }}
+            <div
+                v-else
+                class="w-full h-full flex items-center justify-center p-4 bg-white text-center text-sm"
+            >
+                <div v-if="m.type === 'audio'">🎧 Audio</div>
+                <div v-else class="line-clamp-4">{{ m.content }}</div>
+            </div>
+            
+            <!-- Overlay au survol -->
+            <div class="absolute inset-0 bg-blue-plumepixel/0 group-hover:bg-blue-plumepixel/20 transition-all duration-300"></div>
+          </div>
+          <div class="mt-2">
+            <h3 class="font-bold truncate">{{ m.title }}</h3>
+            <p class="text-xs text-gray-500">{{ new Date(m.created_at).toLocaleDateString() }}</p>
           </div>
         </router-link>
         

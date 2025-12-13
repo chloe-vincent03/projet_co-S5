@@ -12,12 +12,14 @@ CREATE TABLE media (
     url TEXT,                    -- pour les images/vidéos/audio
     content TEXT,                -- pour les textes
 
-    user_id INTEGER,             -- créateur de l’œuvre
-    parent_id INTEGER,           -- pour la collaboration (réponse à une œuvre)
+    user_id INTEGER,
+    parent_id INTEGER, -- NULL si oeuvre originale, ID du parent si réponse (collaboration)
+    is_public INTEGER DEFAULT 1, -- 1=Public, 0=Privé
+    allow_collaboration INTEGER DEFAULT 1, -- 1=Oui, 0=Non
     created_at TEXT DEFAULT (datetime('now')),
 
-    FOREIGN KEY (user_id) REFERENCES Users(user_id),
-    FOREIGN KEY (parent_id) REFERENCES media(id) ON DELETE SET NULL
+    FOREIGN KEY(user_id) REFERENCES Users(user_id),
+    FOREIGN KEY(parent_id) REFERENCES Media(id) ON DELETE SET NULL
 );
 
 -- Table des tags

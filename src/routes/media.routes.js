@@ -12,17 +12,22 @@ const db = new sqlite3.Database('./database.db');
 router.get("/", optionalAuth, (req, res) => {
   console.log("🔥 req.user dans GET /api/media =", req.user);
 
+  /* 
+    Seuls les médias PUBLIC (is_public = 1) sont affichés dans la galerie principale.
+    Règle stricte demandée : même le propriétaire ne voit pas ses œuvres privées ici (seulement sur son profil).
+  */
   const sql = `
 SELECT 
-  m.id, m.title, m.description, m.type, m.url, m.content, m.created_at,
+  m.id, m.title, m.description, m.type, m.url, m.content, m.created_at, m.is_public, m.allow_collaboration,
   GROUP_CONCAT(t.name) AS tags,
 (SELECT 1 FROM likes WHERE user_id = ? AND media_id = m.id) AS is_liked,
 (SELECT COUNT(*) FROM likes WHERE media_id = m.id) AS likes_count
 FROM media m
 LEFT JOIN media_tags mt ON m.id = mt.media_id
 LEFT JOIN tags t ON mt.tag_id = t.id
+WHERE m.is_public = 1
 GROUP BY m.id
-
+ORDER BY m.created_at DESC
   `;
   db.all(sql, [req.user?.user_id || null], (err, rows) => {
     if (err) return res.status(500).json({ error: "Erreur serveur" });
@@ -91,7 +96,7 @@ router.get('/:id', optionalAuth, (req, res) => {
 
   const sql = `
     SELECT 
-      m.id, m.title, m.description, m.type, m.url, m.content, m.created_at,
+      m.id, m.title, m.description, m.type, m.url, m.content, m.created_at, m.is_public, m.allow_collaboration,
       m.user_id,
       u.username, u.first_name, u.last_name,
       GROUP_CONCAT(t.name) AS tags
@@ -170,7 +175,12 @@ const PUBLIC_BASE = process.env.R2_PUBLIC_BASE;
 // -----------------------------
 router.post('/', authenticateSession, upload.single('file'), async (req, res) => {
   // Extraction des données classiques
-  const { title, description, type, content, tags } = req.body;
+  const { title, description, type, content, tags, is_public, allow_collaboration } = req.body;
+
+  // Valeurs par défaut : 1 si non défini/envoyé
+  const publicVal = (is_public === 'false' || is_public === 0 || is_public === '0' || is_public === false) ? 0 : 1;
+  const collabVal = (allow_collaboration === 'false' || allow_collaboration === 0 || allow_collaboration === '0' || allow_collaboration === false) ? 0 : 1;
+
   // L'URL peut venir soit du champ texte (si pas d'upload), soit sera générée
   let url = req.body.url || '';
   const userId = req.user.user_id; // Récupéré via authenticateSession
@@ -208,15 +218,15 @@ router.post('/', authenticateSession, upload.single('file'), async (req, res) =>
 
   // Insertion en base avec user_id
   const insertMediaSql = `
-    INSERT INTO media (title, description, type, url, content, user_id, parent_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO media (title, description, type, url, content, user_id, parent_id, is_public, allow_collaboration)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   // Note: on utilise 'url' qui a été potentiellement mis à jour
   // parent_id peut être null ou un ID
   const parentId = req.body.parent_id || null;
 
-  db.run(insertMediaSql, [title, description, type, url, content, userId, parentId], function (err) {
+  db.run(insertMediaSql, [title, description, type, url, content, userId, parentId, publicVal, collabVal], function (err) {
     if (err) return res.status(500).json({ error: err.message });
 
     const mediaId = this.lastID;
@@ -266,12 +276,21 @@ router.post('/', authenticateSession, upload.single('file'), async (req, res) =>
 router.get("/user/:id", optionalAuth, (req, res) => {
   const userId = req.params.id;
 
-  const sql = `
-    SELECT id, title, url, type, description, created_at, parent_id
+  const requesterId = req.user ? req.user.user_id : -1;
+
+  let sql = `
+    SELECT id, title, url, type, description, created_at, parent_id, is_public
     FROM media
     WHERE user_id = ?
-    ORDER BY created_at DESC
   `;
+
+  // Si ce n'est pas le propriétaire qui regarde, on ne montre que les publics
+  // On compare en string/int donc '!=' ou conversion
+  if (requesterId != userId) {
+    sql += ` AND is_public = 1`;
+  }
+
+  sql += ` ORDER BY created_at DESC`;
 
   db.all(sql, [userId], (err, rows) => {
     if (err)
@@ -437,9 +456,17 @@ router.delete('/:id', authenticateSession, (req, res) => {
 router.put('/:id', authenticateSession, upload.single('file'), async (req, res) => {
   const mediaId = req.params.id;
   const userId = req.user.user_id; // L'utilisateur connecté
-  const { title, description, content, tags } = req.body;
-  let url = req.body.url;
-  let type = req.body.type; // On peut récupérer le type si envoyé, sinon on le déduit du fichier
+  const {
+    title, description, type, content, tags,
+    is_public, allow_collaboration
+  } = req.body;
+
+  // Valeurs par défaut : 1 si non défini/envoyé
+  const publicVal = (is_public === 'false' || is_public === 0) ? 0 : 1;
+  const collabVal = (allow_collaboration === 'false' || allow_collaboration === 0) ? 0 : 1;
+
+  let url = req.body.url; // On peut récupérer l'URL si envoyée
+  let finalType = type; // On peut récupérer le type si envoyé, sinon on le déduit du fichier
 
   // 1. Vérifier si l'œuvre existe et appartient à l'utilisateur
   const checkSql = `SELECT user_id, url, type FROM media WHERE id = ?`;

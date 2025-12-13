@@ -195,7 +195,7 @@ Voir le profil    </MyButton>
       </div>
 
       <!-- COLONNE DROITE (bouton collaborer desktop) -->
-      <div class="lg:w-64 flex-shrink-0 lg:flex lg:flex-col">
+      <div v-if="item.allow_collaboration" class="lg:w-64 flex-shrink-0 lg:flex lg:flex-col">
         <MyButton
         :to="`/ajouter?parent_id=${item.id}`"
       icon="plume"

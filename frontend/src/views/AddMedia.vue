@@ -15,6 +15,16 @@ const tags = ref('');
 const selectedFile = ref(null);
 const parentTitle = ref('');
 
+// Privacy settings
+const isPublic = ref(true);
+const allowCollaboration = ref(true);
+
+function handlePublicChange() {
+  if (!isPublic.value) {
+    allowCollaboration.value = false;
+  }
+}
+
 onMounted(async () => {
     // Si on répond à une œuvre, on récupère son titre pour l'affichage
     if (route.query.parent_id) {
@@ -58,6 +68,10 @@ function handleFileUpload(event) {
   if (selectedFile.value) {
     formData.append('file', selectedFile.value);
   }
+
+  // Privacy
+  formData.append('is_public', isPublic.value);
+  formData.append('allow_collaboration', allowCollaboration.value);
 
   try {
     const res = await fetch('http://localhost:3000/api/media', {
@@ -123,6 +137,47 @@ function handleFileUpload(event) {
 
     <label>Tags (séparés par virgules) :</label>
     <input v-model="tags" placeholder="art, nature, projet...">
+
+    <!-- SECTION CONFIDENTIALITÉ -->
+    <div class="mt-8 mb-8 border-l-4 border-blue-plumepixel pl-4">
+      <h2 class="text-xl font-['PlumePixel'] mb-4">Confidentialité</h2>
+      
+      <!-- Toggle Public -->
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="flex items-center gap-2 font-bold text-blue-plumepixel">
+             <span v-if="isPublic">Public</span>
+             <span v-else>Privé</span>
+          </div>
+          <p class="text-sm text-gray-500 max-w-sm">
+            {{ isPublic 
+               ? "Tout les utilisateurs peuvent consulter cette oeuvre." 
+               : "Vous seul pourrez voir cette oeuvre sur votre profil." 
+            }}
+          </p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" v-model="isPublic" @change="handlePublicChange" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </label>
+      </div>
+
+      <!-- Toggle Collaboration (visible seulement si Public) -->
+      <div v-if="isPublic" class="flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2 font-bold text-blue-plumepixel">
+             <span>Collaboration Activée</span>
+          </div>
+          <p class="text-sm text-gray-500 max-w-sm">
+            Les utilisateurs pourront contribuer a votre oeuvre.
+          </p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" v-model="allowCollaboration" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </label>
+      </div>
+    </div>
 
     <MyButton type="submit" 
             :disabled="isSubmitting"
