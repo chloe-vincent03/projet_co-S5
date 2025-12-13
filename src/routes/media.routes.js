@@ -472,9 +472,11 @@ router.put('/:id', authenticateSession, upload.single('file'), async (req, res) 
     is_public, allow_collaboration
   } = req.body;
 
-  // Valeurs par défaut : 1 si non défini/envoyé
-  const publicVal = (is_public === 'false' || is_public === 0) ? 0 : 1;
-  const collabVal = (allow_collaboration === 'false' || allow_collaboration === 0) ? 0 : 1;
+  // Convertir correctement les valeurs (gérer strings et booléens)
+  const publicVal = (is_public === true || is_public === 'true' || is_public === '1' || is_public === 1) ? 1 : 0;
+  const collabVal = (allow_collaboration === true || allow_collaboration === 'true' || allow_collaboration === '1' || allow_collaboration === 1) ? 1 : 0;
+
+  console.log("🔐 Edit media - is_public:", is_public, "→", publicVal, "| allow_collaboration:", allow_collaboration, "→", collabVal);
 
   let url = req.body.url; // On peut récupérer l'URL si envoyée
   let finalType = type; // On peut récupérer le type si envoyé, sinon on le déduit du fichier
@@ -531,11 +533,11 @@ router.put('/:id', authenticateSession, upload.single('file'), async (req, res) 
     // 2. Mise à jour de la table media
     const updateSql = `
       UPDATE media 
-      SET title = ?, description = ?, content = ?, url = ?, type = ?
+      SET title = ?, description = ?, content = ?, url = ?, type = ?, is_public = ?, allow_collaboration = ?
       WHERE id = ?
     `;
 
-    db.run(updateSql, [title, description, content, url, type, mediaId], function (err) {
+    db.run(updateSql, [title, description, content, url, type, publicVal, collabVal, mediaId], function (err) {
       if (err) return res.status(500).json({ error: "Erreur lors de la mise à jour" });
 
       // 3. Mise à jour des tags (Suppression des anciens -> Ajout des nouveaux)

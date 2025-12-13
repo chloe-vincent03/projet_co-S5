@@ -141,11 +141,35 @@ router.put("/update-profile", authenticateSession, upload.single('avatar'), asyn
       });
     }
 
-    res.json({
-      success: true,
-      message: "Profil mis à jour",
-      avatar: avatarUrl
-    });
+    // Si le compte devient privé, rendre toutes les œuvres privées automatiquement
+    if (isPrivateValue === 1) {
+      const updateMediaSql = `
+        UPDATE media 
+        SET is_public = 0, allow_collaboration = 0 
+        WHERE user_id = ?
+      `;
+
+      db.getDB().run(updateMediaSql, [req.session.user.user_id], (mediaErr) => {
+        if (mediaErr) {
+          console.error("⚠️ Erreur mise à jour médias:", mediaErr);
+        } else {
+          console.log("✅ Toutes les œuvres de l'utilisateur", req.session.user.user_id, "sont maintenant privées");
+        }
+
+        // On répond même en cas d'erreur sur les médias
+        res.json({
+          success: true,
+          message: "Profil mis à jour",
+          avatar: avatarUrl
+        });
+      });
+    } else {
+      res.json({
+        success: true,
+        message: "Profil mis à jour",
+        avatar: avatarUrl
+      });
+    }
   }
   );
 });

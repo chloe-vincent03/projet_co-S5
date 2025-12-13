@@ -12,6 +12,8 @@ const content = ref('');
 const tags = ref('');
 const type = ref('');
 const url = ref(''); // Juste pour l'affichage, pas modifiable pour l'instant
+const isPublic = ref(true);
+const allowCollaboration = ref(true);
 
 const isLoading = ref(true);
 
@@ -35,6 +37,8 @@ onMounted(async () => {
     tags.value = data.tags ? data.tags.join(', ') : '';
     type.value = data.type;
     url.value = data.url;
+    isPublic.value = data.is_public === 1;
+    allowCollaboration.value = data.allow_collaboration === 1;
 
   } catch (err) {
     console.error(err);
@@ -64,6 +68,9 @@ async function submit() {
   if (selectedFile.value) {
     formData.append('file', selectedFile.value);
   }
+
+  formData.append('is_public', isPublic.value ? 1 : 0);
+  formData.append('allow_collaboration', allowCollaboration.value ? 1 : 0);
 
   try {
     const res = await fetch(`http://localhost:3000/api/media/${route.params.id}`, {
@@ -145,9 +152,45 @@ async function submit() {
         <div>
              <label class="block font-bold mb-1">Tags (séparés par virgules)</label>
              <input v-model="tags" class="border p-2 w-full rounded">
-        </div>
+         </div>
 
-        <MyButton 
+         <!-- Privacy Toggles -->
+         <div class="border-t pt-6 mt-6">
+           <h3 class="font-bold text-gray-800 mb-4">Confidentialité</h3>
+           
+           <!-- Toggle Public -->
+           <div class="flex items-center justify-between mb-4 p-4 bg-gray-50 rounded-lg">
+             <div class="flex-1">
+               <label class="font-medium text-gray-700">{{ isPublic ? 'Public' : 'Privé' }}</label>
+               <p class="text-sm text-gray-500 mt-1">
+                 {{ isPublic 
+                    ? "Tout le monde peut voir cette œuvre" 
+                    : "Vous seul pouvez voir cette œuvre" 
+                 }}
+               </p>
+             </div>
+             <label class="relative inline-flex items-center cursor-pointer">
+               <input type="checkbox" v-model="isPublic" class="sr-only peer">
+               <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+             </label>
+           </div>
+
+           <!-- Toggle Collaboration (visible seulement si Public) -->
+           <div v-if="isPublic" class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+             <div class="flex-1">
+               <label class="font-medium text-gray-700">Collaboration Activée</label>
+               <p class="text-sm text-gray-500 mt-1">
+                 Les utilisateurs pourront contribuer à votre œuvre
+               </p>
+             </div>
+             <label class="relative inline-flex items-center cursor-pointer">
+               <input type="checkbox" v-model="allowCollaboration" class="sr-only peer">
+               <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+             </label>
+           </div>
+         </div>
+
+         <MyButton 
             type="submit" 
             size="large" 
             variant="default" 

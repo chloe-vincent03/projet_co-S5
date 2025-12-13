@@ -124,9 +124,20 @@ async function deleteItem() {
         </div>
 
         <!-- TITRE -->
-        <h1 class="text-xl md:text-3xl mb-2 font-['PlumePixel']">
-          {{ item.title }}
-        </h1>
+        <div class="flex items-center gap-3 mb-2">
+          <h1 class="text-xl md:text-3xl font-['PlumePixel']">
+            {{ item.title }}
+          </h1>
+          
+          <!-- Badge Privé/Public (visible uniquement pour le propriétaire) -->
+          <span 
+            v-if="isOwner"
+            class="px-3 py-1 rounded-full text-xs font-medium"
+            :class="item.is_public === 1 ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'"
+          >
+            {{ item.is_public === 1 ? 'Public' : 'Privé' }}
+          </span>
+        </div>
 
         <!-- METADATA -->
         <div class="text-sm text-gray-600 mb-4 flex flex-wrap gap-2">
