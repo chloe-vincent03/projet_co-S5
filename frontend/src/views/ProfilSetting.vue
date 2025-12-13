@@ -12,12 +12,25 @@
           <h2 class="font-[PlumePixel] text-lg mb-3">Image de profil</h2>
 
           <div class="flex items-center gap-4">
-            <!-- image principale -->
-            <div class="w-32 h-32 bg-gray-300 border border-gray-800"></div>
+            <!-- image principale (Preview) -->
+            <div 
+              class="w-32 h-32 bg-gray-300 border border-gray-800 relative cursor-pointer overflow-hidden group"
+              @click="triggerFileInput"
+            >
+                <img v-if="previewUrl || user.avatar" :src="previewUrl || user.avatar" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs text-center">
+                    Modifier
+                </div>
+            </div>
+            <input type="file" ref="fileInput" class="hidden" @change="handleFileChange" accept="image/*">
 
             <!-- miniatures -->
-            <div class="w-10 h-10 bg-gray-300 border border-gray-800"></div>
-            <div class="w-6 h-6 bg-gray-300 border border-gray-800"></div>
+            <div class="w-10 h-10 bg-gray-300 border border-gray-800 overflow-hidden">
+                <img v-if="previewUrl || user.avatar" :src="previewUrl || user.avatar" class="w-full h-full object-cover">
+            </div>
+            <div class="w-6 h-6 bg-gray-300 border border-gray-800 overflow-hidden">
+                <img v-if="previewUrl || user.avatar" :src="previewUrl || user.avatar" class="w-full h-full object-cover">
+            </div>
           </div>
         </div>
 
@@ -78,12 +91,22 @@
           >Annuler</MyButton
         >
         <!-- Bouton sauvegarder -->
+        <!-- Bouton sauvegarder -->
         <MyButton
           @click="saveChanges"
           icon="valider"
           :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"
-          >Sauvegarder</MyButton
-        >
+          :disabled="isLoading"
+          >
+          <div v-if="isLoading" class="flex items-center gap-2">
+            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Sauvegarde...</span>
+          </div>
+          <span v-else>Sauvegarder</span>
+        </MyButton>
       </div>
       <div class="flex flex-col gap-4">
         <MyButton
@@ -181,21 +204,57 @@ const form = ref({
 });
 
 const originalData = ref({ ...user.value });
+const fileInput = ref(null);
+const selectedFile = ref(null);
+const previewUrl = ref(null);
+
+function triggerFileInput() {
+  fileInput.value.click();
+}
+
+function handleFileChange(event) {
+  const file = event.target.files[0];
+  if (file) {
+      selectedFile.value = file;
+      previewUrl.value = URL.createObjectURL(file);
+  }
+}
 
 function resetForm() {
   // remet toutes les données comme elles étaient
   form.value = { ...originalData.value };
-
+  selectedFile.value = null;
+  previewUrl.value = null;
   // retourne au profil
   router.push("/profil");
 }
 
+const isLoading = ref(false);
+
 async function saveChanges() {
+  if (isLoading.value) return;
+  isLoading.value = true;
+  message.value = "";
+
   try {
+    const formData = new FormData();
+    formData.append('username', form.value.username);
+    formData.append('email', form.value.email);
+    formData.append('bio', form.value.bio || "");
+    formData.append('first_name', form.value.first_name || "");
+    formData.append('last_name', form.value.last_name || "");
+
+    if (selectedFile.value) {
+        formData.append('avatar', selectedFile.value);
+    }
+
     const res = await api.put(
       "http://localhost:3000/api/auth/update-profile",
-      form.value,
-      { withCredentials: true }
+      formData,
+      { 
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" }
+      }
     );
 
     router.push("/profil");
@@ -205,6 +264,8 @@ async function saveChanges() {
   } catch (err) {
     message.value =
       err.response?.data?.message || "Erreur lors de la mise à jour.";
+  } finally {
+    isLoading.value = false;
   }
 }
 

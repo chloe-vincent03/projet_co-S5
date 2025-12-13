@@ -1,21 +1,25 @@
 <script setup>
 import router from "@/router";
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import api from "@/api/axios";
 const route = useRoute();
 const user = ref(null);
-const medias = ref([]);
+const allMedia = ref([]);
 
-const res = await fetch(
-  `http://localhost:3000/api/auth/users/${route.params.id}`
-);
-user.value = await res.json();
+const threads = ref([]);
+
+const galerie = computed(() => allMedia.value);
 
 const resMedia = await fetch(
   `http://localhost:3000/api/media/user/${route.params.id}`
 );
-medias.value = await resMedia.json();
+allMedia.value = await resMedia.json();
+
+const resThreads = await fetch(
+  `http://localhost:3000/api/media/user/${route.params.id}/threads`
+);
+threads.value = await resThreads.json();
 
 const activeTab = ref("galerie"); // "galerie" ou "collab"
 
@@ -52,7 +56,14 @@ const goToChat = () => {
   <div class="px-4 pt-12 lg:pt-20 pb-20">
     <div class="max-w-6xl mx-auto">
       <div class="flex flex-col lg:flex-row items-start gap-6">
-        <div class="w-36 h-36 bg-gray-300 border border-blue-plumepixel"></div>
+        <div class="w-36 h-36 bg-gray-300 border border-blue-plumepixel overflow-hidden rounded-lg">
+             <img 
+                v-if="user?.avatar" 
+                :src="user.avatar" 
+                alt="Avatar" 
+                class="w-full h-full object-cover"
+            >
+        </div>
 
         <div>
           <h1 class="text-4xl font-[PlumePixel] text-blue-plumepixel">
@@ -107,7 +118,7 @@ const goToChat = () => {
 
 <div v-if="activeTab === 'galerie'" class="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         <router-link
-          v-for="m in medias"
+          v-for="m in galerie"
           :key="m.id"
           :to="`/oeuvre/${m.id}`"
           class="block bg-gray-300 h-48 overflow-hidden"
@@ -135,9 +146,59 @@ const goToChat = () => {
           </div>
         </router-link>
       </div>
-      <div v-if="activeTab === 'collab'" class="mt-10 text-gray-600 text-sm">
-  <p>Aucune collaboration pour le moment.</p>
-</div>
+
+      <div v-if="activeTab === 'collab'" class="mt-10">
+        <div v-if="threads.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          
+          <!-- THREAD CARD (Copied from collaborations.vue) -->
+          <div v-for="thread in threads" :key="thread.id" class="border border-blue-plumepixel p-2 flex flex-col gap-2 bg-white shadow-sm hover:shadow-md transition">
+            
+            <!-- PARTIE HAUTE : Images -->
+            <div class="flex gap-2 h-48">
+                
+                <!-- GAUCHE : Image Principale (Parent) -->
+                <router-link :to="`/oeuvre/${thread.id}`" class="w-3/4 h-full relative group overflow-hidden bg-gray-100 border border-blue-200">
+                    <img v-if="thread.type === 'image'" :src="thread.url" class="w-full h-full object-cover">
+                    <video v-else-if="thread.type === 'video'" :src="thread.url" class="w-full h-full object-cover"></video>
+                    <div v-else class="w-full h-full flex items-center justify-center text-blue-500">
+                        <span v-if="thread.type === 'audio'" class="text-4xl">🎵</span>
+                        <span v-else class="text-xl font-['PlumePixel']">TxT</span>
+                    </div>
+                </router-link>
+
+                <!-- DROITE : Miniatures (Enfants) - Max 2 affichées -->
+                <div class="w-1/4 h-full flex flex-col gap-2">
+                    <div v-for="child in thread.children.slice(0, 2)" :key="child.id" class="h-1/2 w-full bg-gray-50 border border-blue-200 overflow-hidden relative">
+                        <router-link :to="`/oeuvre/${child.id}`" class="block w-full h-full">
+                            <img v-if="child.type === 'image'" :src="child.url" class="w-full h-full object-cover">
+                            <div v-else class="w-full h-full flex items-center justify-center text-blue-300">
+                                 <span v-if="child.type === 'audio'" class="text-xl">🎵</span>
+                                 <span v-else class="text-xs">TxT</span>
+                            </div>
+                        </router-link>
+                    </div>
+                    <!-- S'il n'y a pas assez d'enfants pour remplir -->
+                    <div v-if="thread.children.length === 0" class="h-full w-full bg-gray-50 border border-dashed border-blue-200 flex items-center justify-center">
+                        <span class="text-xs text-gray-300 text-center">Pas de réponse</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- PARTIE BASSE : Infos -->
+            <div class="mt-2 text-sm">
+                <h2 class="font-['PlumePixel'] text-lg truncate">{{ thread.title }}</h2>
+                <div class="flex justify-between text-gray-500 text-xs mt-1">
+                    <span>{{ thread.username }} {{ thread.children_count > 0 ? '+' + thread.children_count : '' }}</span>
+                    <span>{{ new Date(thread.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) }}</span>
+                </div>
+            </div>
+
+          </div>
+
+        </div>
+        <p v-else class="text-gray-600 text-sm">Aucune collaboration trouvée pour cet utilisateur.</p>
+      </div>
 
     </div>
   </div>

@@ -267,7 +267,7 @@ router.get("/user/:id", optionalAuth, (req, res) => {
   const userId = req.params.id;
 
   const sql = `
-    SELECT id, title, url, type, description, created_at
+    SELECT id, title, url, type, description, created_at, parent_id
     FROM media
     WHERE user_id = ?
     ORDER BY created_at DESC
@@ -278,6 +278,59 @@ router.get("/user/:id", optionalAuth, (req, res) => {
       return res.status(500).json({ success: false, message: err.message });
 
     res.json(rows);
+  });
+});
+
+// GET threads for a specific user (Author of parent OR Author of a response)
+router.get("/user/:id/threads", optionalAuth, (req, res) => {
+  const userId = req.params.id;
+  console.log(`⚡ FETCHING User Threads for ${userId}...`);
+
+  // Sélectionner les Parents où l'utilisateur est l'auteur OU a répondu
+  const sql = `
+    SELECT DISTINCT 
+      m.id, m.title, m.description, m.type, m.url, m.created_at, m.user_id,
+      u.username,
+      (SELECT COUNT(*) FROM media WHERE parent_id = m.id) as children_count
+    FROM media m
+    LEFT JOIN users u ON m.user_id = u.user_id
+    WHERE 
+      (m.user_id = ? AND m.parent_id IS NULL) -- User est l'auteur du parent
+      OR 
+      (m.id IN (SELECT parent_id FROM media WHERE user_id = ? AND parent_id IS NOT NULL)) -- User a répondu
+    ORDER BY m.created_at DESC
+  `;
+
+  db.all(sql, [userId, userId], async (err, parents) => {
+    if (err) {
+      console.error("SQL ERROR in user threads:", err);
+      return res.status(500).json({ error: err.message });
+    }
+
+    const threads = [];
+
+    for (const parent of parents) {
+      const childrenSql = `
+        SELECT id, title, type, url, created_at, user_id
+        FROM media 
+        WHERE parent_id = ?
+        ORDER BY created_at ASC
+      `;
+
+      const children = await new Promise((resolve, reject) => {
+        db.all(childrenSql, [parent.id], (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+
+      threads.push({
+        ...parent,
+        children
+      });
+    }
+
+    res.json(threads);
   });
 });
 

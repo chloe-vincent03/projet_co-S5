@@ -2,8 +2,26 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import db from "../config/database.js";
 import { authenticateSession } from "../middleware/auth.js";
+import multer from 'multer';
+import mime from 'mime-types';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 const router = express.Router();
+
+// Configuration Multer & S3 (Cloudflare R2) - COPIED FROM MEDIA ROUTES
+const upload = multer({ storage: multer.memoryStorage() });
+
+const s3 = new S3Client({
+  region: 'auto',
+  endpoint: process.env.R2_ENDPOINT,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY
+  }
+});
+
+const BUCKET = process.env.R2_BUCKET;
+const PUBLIC_BASE = process.env.R2_PUBLIC_BASE;
 
 router.get("/users", (req, res) => {
   const sql = "SELECT user_id, username, email, first_name, last_name, bio, is_admin FROM Users";
@@ -55,11 +73,11 @@ router.post("/register", async (req, res) => {
 
         req.session.user = userSession;
 
-       return res.json({
-         success: true,
-         message: "User registered & logged in",
-         user: userSession,
-       });
+        return res.json({
+          success: true,
+          message: "User registered & logged in",
+          user: userSession,
+        });
       }
     );
   } catch (err) {
@@ -68,32 +86,61 @@ router.post("/register", async (req, res) => {
 });
 
 // UPDATE PROFILE
-router.put("/update-profile", authenticateSession, (req, res) => {
+router.put("/update-profile", authenticateSession, upload.single('avatar'), async (req, res) => {
   const { username, email, bio, first_name, last_name } = req.body;
+  let avatarUrl = null;
 
-  const sql = `
-    UPDATE Users 
-    SET username = ?, email = ?, bio = ?, first_name = ?, last_name = ?
-    WHERE user_id = ?
-  `;
+  // Gestion de l'upload de l'avatar
+  if (req.file) {
+    try {
+      const originalName = req.file.originalname;
+      const key = `profil/${Date.now()}-${originalName.replace(/\s/g, '_')}`;
+      const contentType = req.file.mimetype || mime.lookup(originalName) || 'application/octet-stream';
 
-  db.getDB().run(
-    sql,
-    [username, email, bio, first_name, last_name, req.session.user.user_id],
-    function (err) {
-      if (err) {
-        return res.status(500).json({
-          success: false,
-          message: "Erreur lors de la mise à jour du profil",
-          error: err.message,
-        });
-      }
+      await s3.send(new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: key,
+        Body: req.file.buffer,
+        ContentType: contentType
+      }));
 
-      res.json({
-        success: true,
-        message: "Profil mis à jour",
+      avatarUrl = PUBLIC_BASE
+        ? `${PUBLIC_BASE}/${encodeURIComponent(key)}`
+        : `https://${BUCKET}.${ACCOUNT_ID}.r2.cloudflarestorage.com/${encodeURIComponent(key)}`;
+
+    } catch (err) {
+      console.error("Erreur R2 Avatar:", err);
+      return res.status(500).json({ error: "Erreur upload avatar: " + err.message });
+    }
+  }
+
+  // Construction de la requête SQL dynamique
+  let sql = `UPDATE Users SET username = ?, email = ?, bio = ?, first_name = ?, last_name = ?`;
+  const params = [username, email, bio, first_name, last_name];
+
+  if (avatarUrl) {
+    sql += `, avatar = ?`;
+    params.push(avatarUrl);
+  }
+
+  sql += ` WHERE user_id = ?`;
+  params.push(req.session.user.user_id);
+
+  db.getDB().run(sql, params, function (err) {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: "Erreur lors de la mise à jour du profil",
+        error: err.message,
       });
     }
+
+    res.json({
+      success: true,
+      message: "Profil mis à jour",
+      avatar: avatarUrl
+    });
+  }
   );
 });
 
