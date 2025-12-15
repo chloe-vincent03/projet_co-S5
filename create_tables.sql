@@ -12,10 +12,14 @@ CREATE TABLE media (
     url TEXT,                    -- pour les images/vidéos/audio
     content TEXT,                -- pour les textes
 
-    user_id INTEGER,             -- créateur de l’œuvre
+    user_id INTEGER,
+    parent_id INTEGER, -- NULL si oeuvre originale, ID du parent si réponse (collaboration)
+    is_public INTEGER DEFAULT 1, -- 1=Public, 0=Privé
+    allow_collaboration INTEGER DEFAULT 1, -- 1=Oui, 0=Non
     created_at TEXT DEFAULT (datetime('now')),
 
-    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+    FOREIGN KEY(user_id) REFERENCES Users(user_id),
+    FOREIGN KEY(parent_id) REFERENCES Media(id) ON DELETE SET NULL
 );
 
 -- Table des tags
@@ -38,6 +42,7 @@ CREATE TABLE IF NOT EXISTS likes (
   user_id INTEGER NOT NULL,
   media_id INTEGER NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  is_private INTEGER DEFAULT 0,
   UNIQUE(user_id, media_id)
 );
 

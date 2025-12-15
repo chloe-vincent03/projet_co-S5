@@ -90,6 +90,23 @@
 
         </div>
 
+        <!-- Privacy Toggle -->
+        <div class="border-t pt-6 mt-6">
+          <h3 class="font-bold text-gray-800 mb-4">Confidentialité du compte</h3>
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div class="flex-1">
+              <label class="font-medium text-gray-700">Compte Privé</label>
+              <p class="text-sm text-gray-500 mt-1">
+                Toutes vos œuvres seront automatiquement privées
+              </p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" v-model="isPrivate" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+        </div>
+
         <p v-if="errorMessage" class="text-red-600 text-sm">{{ errorMessage }}</p>
 
         <MyButton
@@ -129,6 +146,7 @@ const password = ref("");
 const first_name = ref("");
 const last_name = ref("");
 const bio = ref("");
+const isPrivate = ref(false);
 const errorMessage = ref("");
 
 async function registerUser() {
@@ -139,6 +157,7 @@ async function registerUser() {
     first_name: first_name.value,
     last_name: last_name.value,
     bio: bio.value,
+    is_private: isPrivate.value,
   });
 
   if (res.success) {
