@@ -124,9 +124,20 @@ async function deleteItem() {
         </div>
 
         <!-- TITRE -->
-        <h1 class="text-xl md:text-3xl mb-2 font-['PlumePixel']">
-          {{ item.title }}
-        </h1>
+        <div class="flex items-center gap-3 mb-2">
+          <h1 class="text-xl md:text-3xl font-['PlumePixel']">
+            {{ item.title }}
+          </h1>
+          
+          <!-- Badge Privé/Public (visible uniquement pour le propriétaire) -->
+          <span 
+            v-if="isOwner"
+            class="px-3 py-1 rounded-full text-xs font-medium"
+            :class="item.is_public === 1 ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'"
+          >
+            {{ item.is_public === 1 ? 'Public' : 'Privé' }}
+          </span>
+        </div>
 
         <!-- METADATA -->
         <div class="text-sm text-gray-600 mb-4 flex flex-wrap gap-2">
@@ -195,9 +206,9 @@ Voir le profil    </MyButton>
       </div>
 
       <!-- COLONNE DROITE (bouton collaborer desktop) -->
-      <div class="lg:w-64 flex-shrink-0 lg:flex lg:flex-col">
+      <div v-if="item.allow_collaboration" class="lg:w-64 flex-shrink-0 lg:flex lg:flex-col">
         <MyButton
-        to="/"
+        :to="`/ajouter?parent_id=${item.id}`"
       icon="plume"
       size="large"
       :style="{ backgroundColor: 'var(--color-blue-plumepixel)'}"
@@ -208,5 +219,29 @@ Voir le profil    </MyButton>
        </MyButton>
       </div>
     </div>
+
+    <!-- SECTION COLLABORATIONS -->
+    <div v-if="item && item.collaborations && item.collaborations.length > 0" class="mt-12 border-t pt-8">
+      <h2 class="text-2xl font-['PlumePixel'] mb-6">Collaborations</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-for="collab in item.collaborations" :key="collab.id" class="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition">
+          <router-link :to="`/oeuvre/${collab.id}`" class="block">
+            <div v-if="collab.type === 'image'" class="h-48 overflow-hidden">
+               <img :src="collab.url" class="w-full h-full object-cover">
+            </div>
+            <div v-else class="h-48 bg-gray-100 flex items-center justify-center text-gray-400">
+               <span v-if="collab.type === 'video'">Vidéo</span>
+               <span v-else-if="collab.type === 'audio'">Audio</span>
+               <span v-else>Texte</span>
+            </div>
+            <div class="p-4">
+              <h3 class="font-bold text-lg mb-1">{{ collab.title }}</h3>
+              <p class="text-xs text-gray-500">{{ new Date(collab.created_at).toLocaleDateString() }}</p>
+            </div>
+          </router-link>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>

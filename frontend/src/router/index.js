@@ -10,7 +10,8 @@ import { useUserStore } from "../stores/user";
 import ProfilSetting from "@/views/ProfilSetting.vue";
 import ProfilPublic from "@/views/profil/[id].vue";
 import Messagerie from "@/views/messagerie.vue";
-import Chat from "@/views/Chat.vue";
+import Chat from "@/views/chat.vue";
+import NotFound from "@/views/NotFound.vue";
 
 
 const routes = [
@@ -28,7 +29,8 @@ const routes = [
     meta: { guestOnly: true },
   },
   { path: "/oeuvre/:id", component: Details },
-  { path: "/oeuvre/edit/:id", component: () => import("@/views/EditMedia.vue") }, 
+  { path: "/oeuvre/edit/:id", component: () => import("@/views/EditMedia.vue") },
+  { path: "/collaborations", component: () => import("@/views/collaborations.vue") },
   { path: "/ajouter", component: AddMedia },
   { path: "/profil", component: Profil, meta: { requiresAuth: true } },
   {
@@ -56,6 +58,12 @@ const routes = [
     name: "Chat",
     component: Chat,
     meta: { requiresAuth: true },
+  },
+  // 404 - DOIT ETRE EN DERNIER
+  {
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
+    component: NotFound
   },
 ];
 

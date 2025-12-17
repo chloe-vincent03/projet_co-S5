@@ -12,17 +12,23 @@ const db = new sqlite3.Database('./database.db');
 router.get("/", optionalAuth, (req, res) => {
   console.log("🔥 req.user dans GET /api/media =", req.user);
 
+  /* 
+    Seuls les médias PUBLIC (is_public = 1) sont affichés dans la galerie principale.
+    Règle stricte demandée : même le propriétaire ne voit pas ses œuvres privées ici (seulement sur son profil).
+  */
   const sql = `
 SELECT 
-  m.id, m.title, m.description, m.type, m.url, m.content, m.created_at,
+  m.id, m.title, m.description, m.type, m.url, m.content, m.created_at, m.is_public, m.allow_collaboration,
   GROUP_CONCAT(t.name) AS tags,
 (SELECT 1 FROM likes WHERE user_id = ? AND media_id = m.id) AS is_liked,
 (SELECT COUNT(*) FROM likes WHERE media_id = m.id) AS likes_count
 FROM media m
+LEFT JOIN Users u ON m.user_id = u.user_id
 LEFT JOIN media_tags mt ON m.id = mt.media_id
 LEFT JOIN tags t ON mt.tag_id = t.id
+WHERE m.is_public = 1 AND (u.is_private = 0 OR u.is_private IS NULL)
 GROUP BY m.id
-
+ORDER BY m.created_at DESC
   `;
   db.all(sql, [req.user?.user_id || null], (err, rows) => {
     if (err) return res.status(500).json({ error: "Erreur serveur" });
@@ -37,12 +43,61 @@ GROUP BY m.id
   });
 });
 
+router.get('/threads', optionalAuth, (req, res) => {
+  console.log("⚡ FETCHING THREADS...");
+  const sql = `
+    SELECT 
+      m.id, m.title, m.description, m.type, m.url, m.created_at, m.user_id,
+      u.username,
+      (SELECT COUNT(*) FROM media WHERE parent_id = m.id) as children_count
+    FROM media m
+    LEFT JOIN users u ON m.user_id = u.user_id
+    WHERE m.id IN (SELECT DISTINCT parent_id FROM media WHERE parent_id IS NOT NULL)
+    ORDER BY m.created_at DESC
+  `;
+
+  db.all(sql, [], async (err, parents) => {
+    if (err) {
+      console.error("SQL ERROR in threads:", err);
+      return res.status(500).json({ error: err.message });
+    }
+    console.log("Parents found:", parents ? parents.length : 0);
+
+    // Pour chaque parent, on va chercher ses enfants
+    // (Note: ce n'est pas le plus performant pour des milliers de lignes, mais ok pour commencer)
+    const threads = [];
+
+    for (const parent of parents) {
+      const childrenSql = `
+        SELECT id, title, type, url, created_at 
+        FROM media 
+        WHERE parent_id = ?
+        ORDER BY created_at ASC
+      `;
+
+      const children = await new Promise((resolve, reject) => {
+        db.all(childrenSql, [parent.id], (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+
+      threads.push({
+        ...parent,
+        children
+      });
+    }
+
+    res.json(threads);
+  });
+});
+
 router.get('/:id', optionalAuth, (req, res) => {
   const id = req.params.id;
 
   const sql = `
     SELECT 
-      m.id, m.title, m.description, m.type, m.url, m.content, m.created_at,
+      m.id, m.title, m.description, m.type, m.url, m.content, m.created_at, m.is_public, m.allow_collaboration,
       m.user_id,
       u.username, u.first_name, u.last_name,
       GROUP_CONCAT(t.name) AS tags
@@ -66,7 +121,21 @@ router.get('/:id', optionalAuth, (req, res) => {
       tags: row.tags ? row.tags.split(',') : []
     };
 
-    res.json(media);
+    // Récupérer les collaborations (enfants)
+    const collabsSql = `
+      SELECT id, title, type, url, created_at, user_id 
+      FROM media 
+      WHERE parent_id = ? 
+      ORDER BY created_at ASC
+    `;
+
+    db.all(collabsSql, [id], (err, children) => {
+      if (err) console.error("Erreur récup collabs:", err);
+
+      // On ajoute la liste des collaborations à l'objet retourné
+      media.collaborations = children || [];
+      res.json(media);
+    });
   });
 });
 
@@ -78,7 +147,7 @@ router.get('/:id', optionalAuth, (req, res) => {
 // -----------------------------
 import multer from 'multer';
 import mime from 'mime-types';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 // Configuration Multer & S3 (Cloudflare R2)
 const upload = multer({ storage: multer.memoryStorage() });
@@ -107,7 +176,12 @@ const PUBLIC_BASE = process.env.R2_PUBLIC_BASE;
 // -----------------------------
 router.post('/', authenticateSession, upload.single('file'), async (req, res) => {
   // Extraction des données classiques
-  const { title, description, type, content, tags } = req.body;
+  const { title, description, type, content, tags, is_public, allow_collaboration } = req.body;
+
+  // Valeurs par défaut : 1 si non défini/envoyé
+  const publicVal = (is_public === 'false' || is_public === 0 || is_public === '0' || is_public === false) ? 0 : 1;
+  const collabVal = (allow_collaboration === 'false' || allow_collaboration === 0 || allow_collaboration === '0' || allow_collaboration === false) ? 0 : 1;
+
   // L'URL peut venir soit du champ texte (si pas d'upload), soit sera générée
   let url = req.body.url || '';
   const userId = req.user.user_id; // Récupéré via authenticateSession
@@ -116,102 +190,177 @@ router.post('/', authenticateSession, upload.single('file'), async (req, res) =>
     return res.status(400).json({ error: "Titre obligatoire" });
   }
 
-  // Si un fichier est uploadé, on l'envoie sur R2
-  if (req.file) {
-    try {
-      const originalName = req.file.originalname;
-      // Modification du dossier de destination : uploads -> src
-      const key = `src/${Date.now()}-${originalName.replace(/\s/g, '_')}`;
-      const contentType = req.file.mimetype || mime.lookup(originalName) || 'application/octet-stream';
+  // Vérifier si le compte est privé
+  const userCheckSql = `SELECT is_private FROM Users WHERE user_id = ?`;
+  db.get(userCheckSql, [userId], async (userErr, userRow) => {
+    if (userErr) return res.status(500).json({ error: "Erreur serveur" });
 
-      await s3.send(new PutObjectCommand({
-        Bucket: BUCKET,
-        Key: key,
-        Body: req.file.buffer,
-        ContentType: contentType
-      }));
+    // Si le compte est privé, forcer l'œuvre à être privée
+    const finalPublicVal = (userRow && userRow.is_private === 1) ? 0 : publicVal;
+    const finalCollabVal = (userRow && userRow.is_private === 1) ? 0 : collabVal;
 
-      // Construction de l'URL finale
-      url = PUBLIC_BASE
-        ? `${PUBLIC_BASE}/${encodeURIComponent(key)}`
-        : `https://${BUCKET}.${ACCOUNT_ID}.r2.cloudflarestorage.com/${encodeURIComponent(key)}`;
+    // Si un fichier est uploadé, on l'envoie sur R2
+    if (req.file) {
+      try {
+        const originalName = req.file.originalname;
+        // Modification du dossier de destination : uploads -> src
+        const key = `src/${Date.now()}-${originalName.replace(/\s/g, '_')}`;
+        const contentType = req.file.mimetype || mime.lookup(originalName) || 'application/octet-stream';
 
-    } catch (err) {
-      console.error("Erreur R2:", err);
-      // Retourne l'erreur exacte pour le débuggage
-      return res.status(500).json({ error: "Erreur upload R2: " + err.message });
-    }
-  }
+        await s3.send(new PutObjectCommand({
+          Bucket: BUCKET,
+          Key: key,
+          Body: req.file.buffer,
+          ContentType: contentType
+        }));
 
-  // Insertion en base avec user_id
-  const insertMediaSql = `
-    INSERT INTO media (title, description, type, url, content, user_id)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `;
+        // Construction de l'URL finale
+        url = PUBLIC_BASE
+          ? `${PUBLIC_BASE}/${encodeURIComponent(key)}`
+          : `https://${BUCKET}.${ACCOUNT_ID}.r2.cloudflarestorage.com/${encodeURIComponent(key)}`;
 
-  // Note: on utilise 'url' qui a été potentiellement mis à jour
-  db.run(insertMediaSql, [title, description, type, url, content, userId], function (err) {
-    if (err) return res.status(500).json({ error: err.message });
-
-    const mediaId = this.lastID;
-
-    // Gestion des tags
-    let tagsArray = [];
-    if (tags) {
-      // Si tags est une chaîne "tag1, tag2", on split. Si c'est déjà un array (rare avec FormData mais possible), on garde.
-      tagsArray = Array.isArray(tags) ? tags : tags.split(',');
-    }
-
-    if (!tagsArray || tagsArray.length === 0) {
-      return res.json({ message: "Œuvre ajoutée", id: mediaId, url });
-    }
-
-    let completed = 0;
-    // Nettoyage et filtrage des tags vides
-    const cleanedTags = tagsArray.map(t => t.trim()).filter(t => t.length > 0);
-
-    if (cleanedTags.length === 0) {
-      return res.json({ message: "Œuvre ajoutée", id: mediaId, url });
-    }
-
-    cleanedTags.forEach(tag => {
-      db.run(`INSERT OR IGNORE INTO tags (name) VALUES (?)`, [tag], (err) => {
-        if (err) console.error(err);
-        db.get(`SELECT id FROM tags WHERE name = ?`, [tag], (err, row) => {
-          if (!err && row) {
-            db.run(`INSERT INTO media_tags (media_id, tag_id) VALUES (?, ?)`, [mediaId, row.id], checkDone);
-          } else {
-            checkDone();
-          }
-        });
-      });
-    });
-
-    function checkDone() {
-      completed++;
-      if (completed === cleanedTags.length) {
-        res.json({ message: "Œuvre ajoutée", id: mediaId, url });
+      } catch (err) {
+        console.error("Erreur R2:", err);
+        // Retourne l'erreur exacte pour le débuggage
+        return res.status(500).json({ error: "Erreur upload R2: " + err.message });
       }
     }
-  });
-});
+
+    // Insertion en base avec user_id
+    const insertMediaSql = `
+    INSERT INTO media (title, description, type, url, content, user_id, parent_id, is_public, allow_collaboration)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+
+    // Note: on utilise 'url' qui a été potentiellement mis à jour
+    // parent_id peut être null ou un ID
+    const parentId = req.body.parent_id || null;
+
+    db.run(insertMediaSql, [title, description, type, url, content, userId, parentId, finalPublicVal, finalCollabVal], function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+
+      const mediaId = this.lastID;
+
+      // Gestion des tags
+      let tagsArray = [];
+      if (tags) {
+        // Si tags est une chaîne "tag1, tag2", on split. Si c'est déjà un array (rare avec FormData mais possible), on garde.
+        tagsArray = Array.isArray(tags) ? tags : tags.split(',');
+      }
+
+      if (!tagsArray || tagsArray.length === 0) {
+        return res.json({ message: "Œuvre ajoutée", id: mediaId, url });
+      }
+
+      let completed = 0;
+      // Nettoyage et filtrage des tags vides
+      const cleanedTags = tagsArray.map(t => t.trim()).filter(t => t.length > 0);
+
+      if (cleanedTags.length === 0) {
+        return res.json({ message: "Œuvre ajoutée", id: mediaId, url });
+      }
+
+      cleanedTags.forEach(tag => {
+        db.run(`INSERT OR IGNORE INTO tags (name) VALUES (?)`, [tag], (err) => {
+          if (err) console.error(err);
+          db.get(`SELECT id FROM tags WHERE name = ?`, [tag], (err, row) => {
+            if (!err && row) {
+              db.run(`INSERT INTO media_tags (media_id, tag_id) VALUES (?, ?)`, [mediaId, row.id], checkDone);
+            } else {
+              checkDone();
+            }
+          });
+        });
+      });
+
+      function checkDone() {
+        completed++;
+        if (completed === cleanedTags.length) {
+          res.json({ message: "Œuvre ajoutée", id: mediaId, url });
+        }
+      }
+    });
+  }); // Fermeture du db.run pour insertMediaSql
+}); // Fermeture du db.get pour userCheckSql
 
 // GET all media for a specific user
 router.get("/user/:id", optionalAuth, (req, res) => {
   const userId = req.params.id;
 
-  const sql = `
-    SELECT id, title, url, type, description, created_at
+  const requesterId = req.user ? req.user.user_id : -1;
+
+  let sql = `
+    SELECT id, title, url, type, description, created_at, parent_id, is_public
     FROM media
     WHERE user_id = ?
-    ORDER BY created_at DESC
   `;
+
+  // Si ce n'est pas le propriétaire qui regarde, on ne montre que les publics
+  // On compare en string/int donc '!=' ou conversion
+  if (requesterId != userId) {
+    sql += ` AND is_public = 1`;
+  }
+
+  sql += ` ORDER BY created_at DESC`;
 
   db.all(sql, [userId], (err, rows) => {
     if (err)
       return res.status(500).json({ success: false, message: err.message });
 
     res.json(rows);
+  });
+});
+
+// GET threads for a specific user (Author of parent OR Author of a response)
+router.get("/user/:id/threads", optionalAuth, (req, res) => {
+  const userId = req.params.id;
+  console.log(`⚡ FETCHING User Threads for ${userId}...`);
+
+  // Sélectionner les Parents où l'utilisateur est l'auteur OU a répondu
+  const sql = `
+    SELECT DISTINCT 
+      m.id, m.title, m.description, m.type, m.url, m.created_at, m.user_id,
+      u.username,
+      (SELECT COUNT(*) FROM media WHERE parent_id = m.id) as children_count
+    FROM media m
+    LEFT JOIN users u ON m.user_id = u.user_id
+    WHERE 
+      (m.user_id = ? AND m.parent_id IS NULL) -- User est l'auteur du parent
+      OR 
+      (m.id IN (SELECT parent_id FROM media WHERE user_id = ? AND parent_id IS NOT NULL)) -- User a répondu
+    ORDER BY m.created_at DESC
+  `;
+
+  db.all(sql, [userId, userId], async (err, parents) => {
+    if (err) {
+      console.error("SQL ERROR in user threads:", err);
+      return res.status(500).json({ error: err.message });
+    }
+
+    const threads = [];
+
+    for (const parent of parents) {
+      const childrenSql = `
+        SELECT id, title, type, url, created_at, user_id
+        FROM media 
+        WHERE parent_id = ?
+        ORDER BY created_at ASC
+      `;
+
+      const children = await new Promise((resolve, reject) => {
+        db.all(childrenSql, [parent.id], (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+
+      threads.push({
+        ...parent,
+        children
+      });
+    }
+
+    res.json(threads);
   });
 });
 
@@ -279,14 +428,33 @@ router.delete('/:id', authenticateSession, (req, res) => {
     // 2. Supprimer de la base
     // Note: Le "ON DELETE CASCADE" dans media_tags s'occupe des liens, 
     // mais pour 'likes' il faut vérifier si on a mis une cascade ou non.
-    // Supposons que SQLite gère les FK si activé, sinon on fait simple.
 
-    // (Optionnel) Ici, on pourrait aussi supprimer le fichier sur R2 avec s3.send(new DeleteObjectCommand(...))
-    // Pour l'instant on supprime juste l'entrée DB comme demandé.
+    // Suppression sur R2 si une URL existe
+    if (row.url) {
+      try {
+        // On essaie d'extraire la clé "src/..." de l'URL
+        // L'URL est souvent encodée (src%2F...), donc on decode d'abord
+        const decodedUrl = decodeURIComponent(row.url);
+        // On cherche la partie qui commence par 'src/'
+        const match = decodedUrl.match(/(src\/.*)$/);
+
+        if (match && match[1]) {
+          const key = match[1];
+          console.log("Suppression R2 pour la clé :", key);
+
+          s3.send(new DeleteObjectCommand({
+            Bucket: BUCKET,
+            Key: key
+          })).catch(err => console.error("Erreur suppression R2 (async) :", err));
+        }
+      } catch (e) {
+        console.error("Erreur extraction clé R2 :", e);
+      }
+    }
 
     db.run(`DELETE FROM media WHERE id = ?`, [mediaId], (err) => {
       if (err) return res.status(500).json({ error: "Erreur lors de la suppression" });
-      res.json({ message: "Œuvre supprimée avec succès" });
+      res.json({ message: "Œuvre et fichier supprimés avec succès" });
     });
   });
 });
@@ -299,9 +467,19 @@ router.delete('/:id', authenticateSession, (req, res) => {
 router.put('/:id', authenticateSession, upload.single('file'), async (req, res) => {
   const mediaId = req.params.id;
   const userId = req.user.user_id; // L'utilisateur connecté
-  const { title, description, content, tags } = req.body;
-  let url = req.body.url;
-  let type = req.body.type; // On peut récupérer le type si envoyé, sinon on le déduit du fichier
+  const {
+    title, description, type, content, tags,
+    is_public, allow_collaboration
+  } = req.body;
+
+  // Convertir correctement les valeurs (gérer strings et booléens)
+  const publicVal = (is_public === true || is_public === 'true' || is_public === '1' || is_public === 1) ? 1 : 0;
+  const collabVal = (allow_collaboration === true || allow_collaboration === 'true' || allow_collaboration === '1' || allow_collaboration === 1) ? 1 : 0;
+
+  console.log("🔐 Edit media - is_public:", is_public, "→", publicVal, "| allow_collaboration:", allow_collaboration, "→", collabVal);
+
+  let url = req.body.url; // On peut récupérer l'URL si envoyée
+  let finalType = type; // On peut récupérer le type si envoyé, sinon on le déduit du fichier
 
   // 1. Vérifier si l'œuvre existe et appartient à l'utilisateur
   const checkSql = `SELECT user_id, url, type FROM media WHERE id = ?`;
@@ -355,11 +533,11 @@ router.put('/:id', authenticateSession, upload.single('file'), async (req, res) 
     // 2. Mise à jour de la table media
     const updateSql = `
       UPDATE media 
-      SET title = ?, description = ?, content = ?, url = ?, type = ?
+      SET title = ?, description = ?, content = ?, url = ?, type = ?, is_public = ?, allow_collaboration = ?
       WHERE id = ?
     `;
 
-    db.run(updateSql, [title, description, content, url, type, mediaId], function (err) {
+    db.run(updateSql, [title, description, content, url, type, publicVal, collabVal, mediaId], function (err) {
       if (err) return res.status(500).json({ error: "Erreur lors de la mise à jour" });
 
       // 3. Mise à jour des tags (Suppression des anciens -> Ajout des nouveaux)

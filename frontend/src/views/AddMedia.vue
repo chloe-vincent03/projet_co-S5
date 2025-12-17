@@ -1,8 +1,10 @@
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import MyButton from '@/components/MyButton.vue';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 
 const title = ref('');
 const description = ref('');
@@ -11,12 +13,43 @@ const url = ref('');
 const content = ref('');
 const tags = ref('');
 const selectedFile = ref(null);
+const parentTitle = ref('');
+
+// Privacy settings
+const isPublic = ref(true);
+const allowCollaboration = ref(true);
+
+function handlePublicChange() {
+  if (!isPublic.value) {
+    allowCollaboration.value = false;
+  }
+}
+
+onMounted(async () => {
+    // Si on répond à une œuvre, on récupère son titre pour l'affichage
+    if (route.query.parent_id) {
+        try {
+            const res = await fetch(`http://localhost:3000/api/media/${route.query.parent_id}`);
+            if (res.ok) {
+                const data = await res.json();
+                parentTitle.value = data.title;
+            }
+        } catch (e) {
+            console.error("Erreur récup parent", e);
+        }
+    }
+});
 
 function handleFileUpload(event) {
   selectedFile.value = event.target.files[0];
 }
 
-async function submit() {
+  const isSubmitting = ref(false);
+
+  async function submit() {
+  if (isSubmitting.value) return; 
+  isSubmitting.value = true;
+
   const formData = new FormData();
   formData.append('title', title.value);
   formData.append('description', description.value);
@@ -25,10 +58,20 @@ async function submit() {
   formData.append('url', url.value);
   formData.append('content', content.value);
   formData.append('tags', tags.value);
+  
+  // Gestion de la collaboration (parent_id)
+  const parentId = route.query.parent_id;
+  if (parentId) {
+    formData.append('parent_id', parentId);
+  }
 
   if (selectedFile.value) {
     formData.append('file', selectedFile.value);
   }
+
+  // Privacy
+  formData.append('is_public', isPublic.value);
+  formData.append('allow_collaboration', allowCollaboration.value);
 
   try {
     const res = await fetch('http://localhost:3000/api/media', {
@@ -42,7 +85,7 @@ async function submit() {
     if (res.ok) {
       const result = await res.json();
       console.log("Success:", result);
-      alert("Œuvre ajoutée !");
+      // alert("Œuvre ajoutée !"); // On enlève l'alert pour fluidifier
       router.push('/');
     } else {
       const err = await res.json();
@@ -53,12 +96,17 @@ async function submit() {
   } catch (error) {
     console.error("Erreur réseau:", error);
     alert("Erreur de connexion au serveur");
+  } finally {
+    isSubmitting.value = false;
   }
 }
 </script>
 
 <template>
   <h1>Ajouter une œuvre</h1>
+  <div v-if="$route.query.parent_id" class="bg-blue-100 text-blue-800 p-2 rounded mb-4">
+    Collaborer sur "<strong>{{ parentTitle || ('#' + $route.query.parent_id) }}</strong>"
+  </div>
 
   <form @submit.prevent="submit">
 
@@ -90,6 +138,54 @@ async function submit() {
     <label>Tags (séparés par virgules) :</label>
     <input v-model="tags" placeholder="art, nature, projet...">
 
-    <button type="submit">Ajouter</button>
+    <!-- SECTION CONFIDENTIALITÉ -->
+    <div class="mt-8 mb-8 border-l-4 border-blue-plumepixel pl-4">
+      <h2 class="text-xl font-['PlumePixel'] mb-4">Confidentialité</h2>
+      
+      <!-- Toggle Public -->
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="flex items-center gap-2 font-bold text-blue-plumepixel">
+             <span v-if="isPublic">Public</span>
+             <span v-else>Privé</span>
+          </div>
+          <p class="text-sm text-gray-500 max-w-sm">
+            {{ isPublic 
+               ? "Tout les utilisateurs peuvent consulter cette oeuvre." 
+               : "Vous seul pourrez voir cette oeuvre sur votre profil." 
+            }}
+          </p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" v-model="isPublic" @change="handlePublicChange" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </label>
+      </div>
+
+      <!-- Toggle Collaboration (visible seulement si Public) -->
+      <div v-if="isPublic" class="flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2 font-bold text-blue-plumepixel">
+             <span>Collaboration Activée</span>
+          </div>
+          <p class="text-sm text-gray-500 max-w-sm">
+            Les utilisateurs pourront contribuer a votre oeuvre.
+          </p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" v-model="allowCollaboration" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </label>
+      </div>
+    </div>
+
+    <MyButton type="submit" 
+            :disabled="isSubmitting"
+            :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"
+            variant="default">
+      <span v-if="isSubmitting" class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+      <span v-if="isSubmitting">Envoi en cours...</span>
+      <span v-else>Ajouter</span>
+    </MyButton>
   </form>
 </template>

@@ -116,3 +116,24 @@ INSERT INTO media_tags (media_id, tag_id)
 SELECT m.id, t.id FROM media m, tags t WHERE m.title='musique détente' AND t.name IN ('musique','détente');
 
 
+-- Création du lien de collaboration : "son de noël" est une réponse à "Vidéo de noël"
+UPDATE media 
+SET parent_id = (SELECT id FROM media WHERE title = 'Vidéo de noël')
+WHERE title = 'son de noël';
+
+-- "Il pleure dans mon cœur" (Poème) -> réponse à "vidéo jour de pluie"
+UPDATE media 
+SET parent_id = (SELECT id FROM media WHERE title = 'vidéo jour de pluie')
+WHERE title = 'Il pleure dans mon cœur';
+
+-- "musique détente" -> réponse à "vidéo jour de pluie"
+UPDATE media 
+SET parent_id = (SELECT id FROM media WHERE title = 'vidéo jour de pluie')
+WHERE title = 'musique détente';
+
+-- "Illustration de rivière" -> réponse à "Maison au bord d eau" (Thème eau/paysage)
+UPDATE media 
+SET parent_id = (SELECT id FROM media WHERE title = 'Maison au bord d eau')
+WHERE title = 'Illustration de rivière';
+
+

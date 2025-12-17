@@ -1,52 +1,73 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <title>Galerie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plume & Pixel Server</title>
   <style>
-    .media-card img {
-      max-width: 150px;
-      height: auto;
-      object-fit: cover;
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f7f9fc;
+      color: #333;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 20px 40px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e1e4e8;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      background-color: #2ecc71;
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+      animation: pulse 2s infinite;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      margin: 0;
+      font-weight: 500;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+      }
+
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+      }
+
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+      }
     }
   </style>
 </head>
+
 <body>
-
-  <h1>Galerie des œuvres</h1>
-
-  <label for="sort-gallery">Trier par :</label>
-<select id="sort-gallery">
-  <option value="date-desc">Date : du plus récent au plus ancien</option>
-  <option value="date-asc">Date : du plus ancien au plus récent</option>
-  <option value="title-asc">Titre : A → Z</option>
-  <option value="title-desc">Titre : Z → A</option>
-</select>
-
-  <label for="filter-type">Filtrer par nature :</label>
-<select id="filter-type">
-  <option value="all">Tous</option>
-  <option value="image">Images</option>
-  <option value="audio">Audio</option>
-  <option value="video">Vidéos</option>
-  <option value="text">Récit</option>
-</select>
-
-<label for="filter-tags">Filtrer par tag :</label>
-<input type="text" id="filter-tags" placeholder="Exemple : noël, vidéo">
-
-
-
-
-  <!-- Conteneur pour la galerie -->
-  <div id="gallery"></div>
-
-  <a href="ajouter.html">
-  <button>➕ Ajouter une œuvre</button>
-</a>
-
-
-  <script src="script.js"></script>
+  <div class="status">
+    <div class="dot"></div>
+    <h1>Plume & Pixel API is running 🚀</h1>
+  </div>
 </body>
-</html>
 
+</html>
