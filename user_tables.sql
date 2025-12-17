@@ -16,7 +16,8 @@ CREATE TABLE Users (
     avatar TEXT DEFAULT '/default-avatar.png',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    is_admin INTEGER DEFAULT 0
+    is_admin INTEGER DEFAULT 0,
+    is_private INTEGER DEFAULT 0
 );
 
 
