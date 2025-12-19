@@ -263,6 +263,40 @@ router.delete("/delete-account", authenticateSession, (req, res) => {
   });
 });
 
+// DELETE USER (Admin only)
+router.delete("/admin/users/:id", authenticateSession, (req, res) => {
+  if (!req.user.is_admin) {
+    return res.status(403).json({ success: false, message: "Accès refusé" });
+  }
+
+  const userIdToDelete = req.params.id;
+
+  // Empêcher de se supprimer soi-même via cette route (sécurité)
+  if (parseInt(userIdToDelete) === req.user.user_id) {
+    return res.status(400).json({ success: false, message: "Utilisez la suppression de compte standard pour votre propre compte." });
+  }
+
+  const sql = "DELETE FROM Users WHERE user_id = ?";
+
+  db.getDB().run(sql, [userIdToDelete], function (err) {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: "Erreur lors de la suppression de l'utilisateur",
+      });
+    }
+
+    if (this.changes === 0) {
+      return res.status(404).json({ success: false, message: "Utilisateur introuvable" });
+    }
+
+    res.json({
+      success: true,
+      message: "Utilisateur supprimé avec succès par l'administrateur",
+    });
+  });
+});
+
 // GET USER BY ID (profil public)
 router.get("/users/:id", (req, res) => {
   const userId = req.params.id;

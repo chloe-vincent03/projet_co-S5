@@ -32,6 +32,10 @@ INSERT INTO Users (username, email, password_hash, first_name, last_name, bio) V
 ('jane_smith', 'jane@example.com', '$2b$10$rQ8HqUqJ9Z3KvGQHZhYgN.ZYF3xhvVzxhPJXqHqHqHqHqHqHqHqHq', 'Jane', 'Smith', 'coucou'),
 ('chef_mike', 'mike@example.com', '$2b$10$rQ8HqUqJ9Z3KvGQHZhYgN.ZYF3xhvVzxhPJXqHqHqHqHqHqHqHqHq', 'Mike', 'Johnson', 'coucou');
 
+INSERT INTO Users (username, email, password_hash, first_name, last_name, bio, is_admin) VALUES
+('admin1', 'admin1@plume.pixel', '$2b$10$rQ8HqUqJ9Z3KvGQHZhYgN.ZYF3xhvVzxhPJXqHqHqHqHqHqHqHqHq', 'Super', 'Admin', 'Compte administrateur', 1),
+('admin2', 'admin2@plume.pixel', '$2b$10$rQ8HqUqJ9Z3KvGQHZhYgN.ZYF3xhvVzxhPJXqHqHqHqHqHqHqHqHq', 'Moderateur', 'Global', 'Compte modération', 1);
+
 -- Note: To properly hash passwords, use bcrypt in your Node.js code:
 -- const bcrypt = require('bcryptjs');
 -- const hashedPassword = await bcrypt.hash('password123', 10);

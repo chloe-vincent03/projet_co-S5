@@ -181,9 +181,10 @@ Voir le profil    </MyButton>
 
         </div>
 
-        <!-- ZONE BOUTONS PROPRIÉTAIRE -->
-        <div v-if="isOwner" class="border-t pt-4 mt-4 flex gap-4">
+        <!-- ZONE BOUTONS PROPRIÉTAIRE OU ADMIN -->
+        <div v-if="isOwner || (userStore.user && userStore.user.is_admin)" class="border-t pt-4 mt-4 flex gap-4">
             <MyButton 
+                v-if="isOwner"
                 :to="`/oeuvre/edit/${item.id}`"
                 size="small"
                 font="inter"
@@ -199,7 +200,7 @@ Voir le profil    </MyButton>
                 icon="delete" 
                 @click="deleteItem"
             >
-                Supprimer l'œuvre
+                {{ isOwner ? "Supprimer l'œuvre" : "Supprimer (Admin)" }}
             </MyButton>
         </div>
 
