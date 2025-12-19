@@ -29,6 +29,7 @@ const send = () => {
 };
 
 import { nextTick } from "vue";
+import MyButton from "@/components/MyButton.vue";
 
 const messagesEnd = ref(null);
 
@@ -45,7 +46,7 @@ watch(
   <div class="flex h-[calc(100vh-80px)] bg-white">
 
     <!-- COLONNE GAUCHE : conversations -->
-    <aside class="w-72 border-r overflow-y-auto">
+    <aside class="w-72  overflow-y-auto">
       <div class="p-4 font-semibold">Messages</div>
 
       <div
@@ -71,7 +72,7 @@ watch(
     <section class="flex flex-col flex-1">
 
       <!-- HEADER -->
-      <header class="h-16 border-b flex items-center px-6 font-semibold">
+      <header class="h-16  flex items-center px-6 font-semibold">
         {{ receiver?.username || "Discussion" }}
       </header>
 
@@ -93,19 +94,19 @@ watch(
       </main>
 
       <!-- INPUT -->
-      <footer class="h-16 border-t flex items-center px-4 gap-2">
+      <footer class="h-16 flex items-center px-4 gap-2">
         <input
           v-model="text"
           @keyup.enter="send"
           class="flex-1 border rounded-full px-4 py-2 outline-none"
           placeholder="Écrire un message…"
         />
-        <button
+        <MyButton
           @click="send"
-          class="px-4 py-2 bg-blue-500 text-white rounded-full"
+:style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"        >
         >
           Envoyer
-        </button>
+      </MyButton>
       </footer>
 <div ref="messagesEnd"></div>
 
