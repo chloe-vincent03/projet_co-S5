@@ -69,6 +69,7 @@ router.post("/register", async (req, res) => {
           email,
           bio: bio || "",
           is_admin: 0, // par défaut
+          is_private: is_private ? 1 : 0,
         };
 
         req.session.user = userSession;
@@ -201,6 +202,7 @@ router.post("/login", (req, res) => {
       username: user.username,
       email: user.email,
       is_admin: user.is_admin,
+      is_private: user.is_private,
     };
 
     return res.json({
