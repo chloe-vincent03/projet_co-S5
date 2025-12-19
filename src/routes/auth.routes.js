@@ -67,6 +67,8 @@ router.post("/register", async (req, res) => {
           user_id: this.lastID,
           username,
           email,
+          first_name,
+          last_name,
           bio: bio || "",
           is_admin: 0, // par défaut
           is_private: is_private ? 1 : 0,
@@ -201,8 +203,13 @@ router.post("/login", (req, res) => {
       user_id: user.user_id,
       username: user.username,
       email: user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      bio: user.bio,
+      avatar: user.avatar,
       is_admin: user.is_admin,
       is_private: user.is_private,
+      created_at: user.created_at
     };
 
     return res.json({
