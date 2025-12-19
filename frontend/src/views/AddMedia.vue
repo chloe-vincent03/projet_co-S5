@@ -2,9 +2,11 @@
 import MyButton from '@/components/MyButton.vue';
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useUserStore } from '@/stores/user';
 
 const router = useRouter();
 const route = useRoute();
+const userStore = useUserStore();
 
 const title = ref('');
 const description = ref('');
@@ -37,6 +39,12 @@ onMounted(async () => {
         } catch (e) {
             console.error("Erreur récup parent", e);
         }
+    }
+
+    // Force privé si le compte l'est
+    if (userStore.user?.is_private) {
+        isPublic.value = false;
+        allowCollaboration.value = false;
     }
 });
 
@@ -142,8 +150,8 @@ function handleFileUpload(event) {
     <div class="mt-8 mb-8 border-l-4 border-blue-plumepixel pl-4">
       <h2 class="text-xl font-['PlumePixel'] mb-4">Confidentialité</h2>
       
-      <!-- Toggle Public -->
-      <div class="flex items-center justify-between mb-4">
+      <!-- Toggle Public (CACHÉ SI COMPTE PRIVÉ) -->
+      <div v-if="!userStore.user?.is_private" class="flex items-center justify-between mb-4">
         <div>
           <div class="flex items-center gap-2 font-bold text-blue-plumepixel">
              <span v-if="isPublic">Public</span>
@@ -160,6 +168,16 @@ function handleFileUpload(event) {
           <input type="checkbox" v-model="isPublic" @change="handlePublicChange" class="sr-only peer">
           <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
         </label>
+      </div>
+
+      <!-- MESSAGE COMPTE PRIVÉ -->
+      <div v-else class="mb-4 bg-gray-100 p-3 rounded-lg border border-gray-300">
+        <div class="flex items-center gap-2 font-bold text-gray-600">
+           Privé
+        </div>
+        <p class="text-sm text-gray-500 mt-1">
+          Votre compte est en mode privé. Cette œuvre sera visible uniquement par vous.
+        </p>
       </div>
 
       <!-- Toggle Collaboration (visible seulement si Public) -->
