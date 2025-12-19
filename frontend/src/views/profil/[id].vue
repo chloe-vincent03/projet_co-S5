@@ -50,6 +50,22 @@ const goToChat = () => {
 };
 
 
+import { useUserStore } from "@/stores/user";
+
+const userStore = useUserStore();
+const currentUser = computed(() => userStore.user);
+
+const deleteUser = async () => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.")) return;
+
+    try {
+        await api.delete(`/auth/admin/users/${route.params.id}`);
+        alert("Utilisateur supprimé avec succès.");
+        router.push("/");
+    } catch (err) {
+        alert("Erreur lors de la suppression : " + (err.response?.data?.message || err.message));
+    }
+};
 </script>
 
 <template>
@@ -115,6 +131,15 @@ const goToChat = () => {
 
 </div>
 
+  <!-- ADMIN SECTION -->
+  <div v-if="currentUser?.is_admin && user && currentUser.user_id !== user.user_id" class="mt-4">
+    <button 
+      @click="deleteUser" 
+      class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+    >
+      Supprimer cet utilisateur (Admin)
+    </button>
+  </div>
 
 <div v-if="activeTab === 'galerie'" class="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         <router-link

@@ -28,9 +28,13 @@ CREATE TABLE Users (
 -- Insert sample users (password is 'password123' hashed with bcrypt)
 -- Note: These are example hashes - in production, hash passwords properly!
 INSERT INTO Users (username, email, password_hash, first_name, last_name, bio) VALUES
-('john_doe', 'john@example.com', '$2b$10$rQ8HqUqJ9Z3KvGQHZhYgN.ZYF3xhvVzxhPJXqHqHqHqHqHqHqHqHq', 'John', 'Doe', 'coucou'),
-('jane_smith', 'jane@example.com', '$2b$10$rQ8HqUqJ9Z3KvGQHZhYgN.ZYF3xhvVzxhPJXqHqHqHqHqHqHqHqHq', 'Jane', 'Smith', 'coucou'),
-('chef_mike', 'mike@example.com', '$2b$10$rQ8HqUqJ9Z3KvGQHZhYgN.ZYF3xhvVzxhPJXqHqHqHqHqHqHqHqHq', 'Mike', 'Johnson', 'coucou');
+('john_doe', 'john@example.com', '$2b$10$WD5w2l2tI9T.AKGfv1.OYvz563Bwq/7KoA', 'John', 'Doe', 'coucou'),
+('jane_smith', 'jane@example.com', '$2b$10$WD5w2l2tI9T.AKGfv1.OYvz563Bwq/7KoA', 'Jane', 'Smith', 'coucou'),
+('chef_mike', 'mike@example.com', '$2b$10$WD5w2l2tI9T.AKGfv1.OYvz563Bwq/7KoA', 'Mike', 'Johnson', 'coucou');
+
+INSERT INTO Users (username, email, password_hash, first_name, last_name, bio, is_admin) VALUES
+('chloe', 'chloe@admin.com', '$2b$10$WD5w2l2tI9T.AKGfv1.OYvz563Bwq/7KoA', 'Chloe', 'Admin', 'Compte administrateur', 1),
+('noelie', 'noelie@admin.com', '$2b$10$WD5w2l2tI9T.AKGfv1.OYvz563Bwq/7KoA', 'Noelie', 'Admin', 'Compte modération', 1);
 
 -- Note: To properly hash passwords, use bcrypt in your Node.js code:
 -- const bcrypt = require('bcryptjs');
