@@ -16,7 +16,7 @@ const isLoggedIn = computed(() => userStore.isLoggedIn);
 
 <template>
   <header
-    class="w-full fixed top-0 left-0 z-50 bg-white border-b-2 border-b-blue-plumepixel lg:mx-auto"
+    class="w-full fixed top-0 left-0 z-50 bg-white border-b-2 border-b-blue-plumepixel lg:mx-auto "
   >
     <div
       class="max-w-7xl mx-2 flex items-center justify-between py-4 px-4 lg:py-2 relative z-50"
@@ -39,10 +39,10 @@ const isLoggedIn = computed(() => userStore.isLoggedIn);
         <ul
           class="flex flex-col gap-12 text-3xl text-center lg:flex-row lg:gap-8 lg:text-base lg:text-left lg:items-center"
         >
-          <li>
+          <li class="hover:underline hover:text-blue-plumepixel">
             <RouterLink @click="closeMenu" to="/galerie">Galerie</RouterLink>
           </li>
-          <li>
+          <li class="hover:underline hover:text-blue-plumepixel">
             <RouterLink @click="closeMenu" to="/collaborations"
               >Collaborations</RouterLink
             >
@@ -76,13 +76,15 @@ const isLoggedIn = computed(() => userStore.isLoggedIn);
 
           <template v-else>
             <li>
-              <MyButton
-                @click="closeMenu"
-                to="/profil"
-                :style="{
-                  backgroundColor: 'var(--color-blue-plumepixel)',
-                }"
-              >
+              <RouterLink @click="closeMenu" to="/coups-de-coeur" class="hover:underline hover:text-blue-plumepixel">
+                Mes coups de cœur
+              </RouterLink>
+            </li>
+
+            <li>
+              <MyButton @click="closeMenu" to="/profil" :style="{
+                backgroundColor: 'var(--color-blue-plumepixel)',
+              }">
                 Mon Profil
               </MyButton>
             </li>

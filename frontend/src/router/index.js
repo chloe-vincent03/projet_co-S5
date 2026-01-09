@@ -16,6 +16,7 @@ import MentionsLegales from "@/views/MentionsLegales.vue";
 import PolitiqueConfidentialite from "@/views/PolitiqueConfidentialite.vue";
 import CGU from "@/views/CGU.vue";
 import Contact from "@/views/Contact.vue";
+import CoupDeCoeur from "@/views/coupDeCoeur.vue";
 
 
 const routes = [
@@ -94,6 +95,11 @@ const routes = [
     path: "/contact",
     name: "contact",
     component: Contact,
+  },
+  {
+    path: "/coups-de-coeur",
+    name: "coups-de-coeur",
+    component: CoupDeCoeur,
   },
 ];
 
