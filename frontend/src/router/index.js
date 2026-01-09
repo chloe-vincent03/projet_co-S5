@@ -12,6 +12,9 @@ import ProfilPublic from "@/views/profil/[id].vue";
 import Messagerie from "@/views/messagerie.vue";
 import Chat from "@/views/chat.vue";
 import NotFound from "@/views/NotFound.vue";
+import MentionsLegales from "@/views/MentionsLegales.vue";
+import PolitiqueConfidentialite from "@/views/PolitiqueConfidentialite.vue";
+import CGU from "@/views/CGU.vue"
 
 
 const routes = [
@@ -29,8 +32,14 @@ const routes = [
     meta: { guestOnly: true },
   },
   { path: "/oeuvre/:id", component: Details },
-  { path: "/oeuvre/edit/:id", component: () => import("@/views/EditMedia.vue") },
-  { path: "/collaborations", component: () => import("@/views/collaborations.vue") },
+  {
+    path: "/oeuvre/edit/:id",
+    component: () => import("@/views/EditMedia.vue"),
+  },
+  {
+    path: "/collaborations",
+    component: () => import("@/views/collaborations.vue"),
+  },
   { path: "/ajouter", component: AddMedia },
   { path: "/profil", component: Profil, meta: { requiresAuth: true } },
   {
@@ -63,7 +72,22 @@ const routes = [
   {
     path: "/:pathMatch(.*)*",
     name: "NotFound",
-    component: NotFound
+    component: NotFound,
+  },
+  {
+    path: "/mentions-legales",
+    name: "mentions-legales",
+    component: MentionsLegales,
+  },
+  {
+    path: "/politique-confidentialite",
+    name: "politique-confidentialite",
+    component: PolitiqueConfidentialite,
+  },
+  {
+    path: "/cgu",
+    name: "cgu",
+    component: CGU,
   },
 ];
 

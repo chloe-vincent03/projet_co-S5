@@ -20,7 +20,7 @@ import IconLogo from "./icons/IconLogo.vue";
           </RouterLink>
 
           <p class="text-sm text-center lg:text-left leading-tight">
-            Copyright © 2025 Plume & Pixel<br />
+            Copyright © 2026 Plume & Pixel<br />
             Tous droits réservés
           </p>
 
@@ -38,7 +38,7 @@ import IconLogo from "./icons/IconLogo.vue";
           class="flex flex-col items-center gap-4 text-sm lg:flex-row lg:items-start lg:gap-12"
         >
           <li>
-            <a href="#" class="hover:font-bold focus:font-bold"
+            <a href="/mentions-legales" class="hover:font-bold focus:font-bold"
               >Mentions légales</a
             >
           </li>
@@ -46,12 +46,12 @@ import IconLogo from "./icons/IconLogo.vue";
             <a href="#" class="hover:font-bold focus:font-bold">À propos</a>
           </li>
           <li>
-            <a href="#" class="hover:font-bold focus:font-bold"
+            <a href="/cgu" class="hover:font-bold focus:font-bold"
               >Conditions générales d'utilisation</a
             >
           </li>
           <li>
-            <a href="#" class="hover:font-bold focus:font-bold"
+            <a href="/politique-confidentialite" class="hover:font-bold focus:font-bold"
               >Politique de confidentialité</a
             >
           </li>
