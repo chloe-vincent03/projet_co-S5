@@ -1,6 +1,5 @@
 <script setup>
 import { RouterLink } from "vue-router";
-import axios from "axios";
 import { useUserStore } from "@/stores/user";
 import LikeButton from "./LikeButton.vue";
 
@@ -62,7 +61,7 @@ const props = defineProps({
 </script>
 
 <template>
-  <div class="media-card">
+ <div class="media-card">
     <!-- carte cliquable vers la page détail -->
     <RouterLink :to="'/oeuvre/' + item.id" class="block">
       <img v-if="item.type === 'image'" :src="item.url" :alt="item.title" />
@@ -90,5 +89,8 @@ const props = defineProps({
       <span v-else>🤍</span>
       <span>{{ item.likes_count ?? 0 }}</span>
     </button> -->
+  </div>
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    <GalleryItem v-for="item in (items || []).filter(Boolean)" :key="item.id" :item="item" />
   </div>
 </template>

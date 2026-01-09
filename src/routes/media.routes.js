@@ -404,6 +404,38 @@ router.delete("/:id/like", authenticateSession, (req, res) => {
   });
 });
 
+// -----------------------------
+// Récupérer les œuvres likées par un utilisateur (Coups de cœur)
+// -----------------------------
+router.get("/liked/:userId", authenticateSession, (req, res) => {
+  const { userId } = req.params;
+
+  // Sécurité simple : un user ne peut voir que SES coups de cœur
+  if (req.user.user_id != userId) {
+    return res.status(403).json({ error: "Accès interdit" });
+  }
+
+  const sql = `
+    SELECT 
+      m.id, m.title, m.description, m.type, m.url, m.content, 
+      m.created_at, m.is_public,
+      (SELECT COUNT(*) FROM likes WHERE media_id = m.id) AS likes_count
+    FROM likes l
+    JOIN media m ON m.id = l.media_id
+    WHERE l.user_id = ?
+    ORDER BY l.created_at DESC
+  `;
+
+  db.all(sql, [userId], (err, rows) => {
+    if (err) {
+      console.error("❌ Erreur coups de cœur :", err);
+      return res.status(500).json({ error: "Erreur serveur" });
+    }
+
+    res.json(rows);
+  });
+});
+
 
 // -----------------------------
 // Supprimer une œuvre
