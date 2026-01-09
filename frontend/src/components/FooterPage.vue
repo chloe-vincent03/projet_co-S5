@@ -37,13 +37,13 @@ import IconLogo from "./icons/IconLogo.vue";
         <ul
           class="flex flex-col items-center gap-4 text-sm lg:flex-row lg:items-start lg:gap-12"
         >
+         <li>
+            <a href="/contact" class="hover:font-bold focus:font-bold">Contact</a>
+          </li>
           <li>
             <a href="/mentions-legales" class="hover:font-bold focus:font-bold"
               >Mentions légales</a
             >
-          </li>
-          <li>
-            <a href="#" class="hover:font-bold focus:font-bold">À propos</a>
           </li>
           <li>
             <a href="/cgu" class="hover:font-bold focus:font-bold"

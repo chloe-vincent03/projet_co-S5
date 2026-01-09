@@ -14,7 +14,8 @@ import Chat from "@/views/chat.vue";
 import NotFound from "@/views/NotFound.vue";
 import MentionsLegales from "@/views/MentionsLegales.vue";
 import PolitiqueConfidentialite from "@/views/PolitiqueConfidentialite.vue";
-import CGU from "@/views/CGU.vue"
+import CGU from "@/views/CGU.vue";
+import Contact from "@/views/Contact.vue";
 
 
 const routes = [
@@ -88,6 +89,11 @@ const routes = [
     path: "/cgu",
     name: "cgu",
     component: CGU,
+  },
+  {
+    path: "/contact",
+    name: "contact",
+    component: Contact,
   },
 ];
 

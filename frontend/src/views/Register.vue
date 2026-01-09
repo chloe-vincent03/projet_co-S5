@@ -52,7 +52,7 @@ async function registerUser() {
       max-w-2xl p-6 lg:p-10 
       border border-blue-plumepixel">
 
-      <h1 class="text-3xl text-blue-plumepixel mb-8 font-[PlumePixel]">
+      <h1 class="text-4xl text-blue-plumepixel mb-8 font-[PlumePixel]">
         Inscrivez-vous !
       </h1>
 
