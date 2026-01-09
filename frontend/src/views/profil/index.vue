@@ -7,6 +7,7 @@ import api from "@/api/axios";
 
 const store = useUserStore();
 const router = useRouter();
+const selectedWorks = ref([]);
 
 const message = ref("");
 
@@ -61,6 +62,46 @@ async function deleteAcc() {
 function goToSettings() {
   router.push("/profil/settings");
 }
+
+async function generateBook() {
+  try {
+    if (!allMedia.value.length) {
+      message.value = "Vous n'avez aucune œuvre à inclure dans le livre.";
+      return;
+    }
+
+    const res = await fetch("http://localhost:3000/api/book/pdf", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: `Livre de ${user.value.username}`,
+        worksIds: allMedia.value.map((m) => m.id),
+        author: user.value.username,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Erreur lors de la génération du PDF");
+    }
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Livre_${user.value.username}.pdf`;
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error(err);
+    message.value = "Impossible de générer le livre pour le moment.";
+  }
+}
+
+
 </script>
 
 <template>
@@ -248,5 +289,9 @@ function goToSettings() {
         <p v-else class="text-gray-600 text-sm">Vous n'avez participé à aucune collaboration.</p>
       </div>
     </div>
+   <MyButton class="ml-56 mt-5" :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }" @click="generateBook">
+      Télécharger mon portfolio (PDF)
+    </MyButton>
   </div>
+ 
 </template>
