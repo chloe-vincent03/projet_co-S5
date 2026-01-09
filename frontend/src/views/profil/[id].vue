@@ -3,6 +3,7 @@ import router from "@/router";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import api from "@/api/axios";
+import MyButton from "@/components/MyButton.vue";
 const route = useRoute();
 const user = ref(null);
 const allMedia = ref([]);
@@ -21,8 +22,7 @@ const resThreads = await fetch(
 );
 threads.value = await resThreads.json();
 
-const activeTab = ref("galerie"); // "galerie" ou "collab"
-
+const activeTab = ref("galerie"); 
 // 🔁 Réagir AU PARAMÈTRE D’URL
 watch(
   () => route.params.id,
@@ -36,7 +36,7 @@ watch(
       console.error("Erreur chargement user :", err);
     }
   },
-  { immediate: true } // 🔥 remplace onMounted
+  { immediate: true } 
 );
 
 const goToChat = () => {
@@ -70,6 +70,7 @@ const deleteUser = async () => {
 
 <template>
   <div class="px-4 pt-12 lg:pt-20 pb-20">
+
     <div class="max-w-6xl mx-auto">
       <div class="flex flex-col lg:flex-row items-start gap-6">
         <div class="w-36 h-36 bg-gray-300 border border-blue-plumepixel overflow-hidden rounded-lg">
@@ -224,7 +225,9 @@ const deleteUser = async () => {
         </div>
         <p v-else class="text-gray-600 text-sm">Aucune collaboration trouvée pour cet utilisateur.</p>
       </div>
+ 
 
     </div>
+    
   </div>
 </template>

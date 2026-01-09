@@ -10,6 +10,8 @@ import session from "express-session";
 import cookieParser from "cookie-parser";
 import http from "http";
 import { Server } from "socket.io";
+import bookRoutes from "./routes/book.routes.js";
+
 import db from "./config/database.js"; // pour enregistrer les messages
 
 dotenv.config();
@@ -59,7 +61,7 @@ app.use(
 app.use("/api/media", mediaRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
-
+app.use("/api/book", bookRoutes);
 
 // -----------------------------
 // STATIC FILES
