@@ -4,6 +4,7 @@ import { RouterLink } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import IconLogo from "@/components/icons/IconLogo.vue";
 import MyButton from "./MyButton.vue";
+import IconChat from "./icons/IconChat.vue";
 
 const userStore = useUserStore();
 
@@ -75,16 +76,20 @@ const isLoggedIn = computed(() => userStore.isLoggedIn);
           </template>
 
           <template v-else>
-            <li>
-              <RouterLink @click="closeMenu" to="/coups-de-coeur" class="hover:underline hover:text-blue-plumepixel">
+            <li class="hover:underline hover:text-blue-plumepixel">
+              <RouterLink @click="closeMenu" to="/coups-de-coeur">
                 Mes coups de cœur
+              </RouterLink>
+            </li>
+            <li class="hover:underline hover:text-blue-plumepixel">
+              
+              <RouterLink @click="closeMenu" to="/messagerie">
+                <IconChat />
               </RouterLink>
             </li>
 
             <li>
-              <MyButton @click="closeMenu" to="/profil" :style="{
-                backgroundColor: 'var(--color-blue-plumepixel)',
-              }">
+              <MyButton @click="closeMenu" to="/profil" :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }">
                 Mon Profil
               </MyButton>
             </li>
