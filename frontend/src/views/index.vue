@@ -65,12 +65,12 @@ const filtered = computed(() => {
 
 
 <section class="p-6">
-<h1 class="font-[PlumePixel] text-3xl mb-4">Galerie des œuvres</h1>
+<h1 class="font-[PlumePixel] text-3xl mb-4 ml-4 text-blue-plumepixel">Galerie des œuvres</h1>
 
 <div class="flex flex-wrap items-center gap-4 mb-6">
 
-  <label class="text-sm font-medium">Trier :</label>
-  <select v-model="sort" class="border px-2 py-1 rounded text-sm">
+  <label class="text-sm font-medium ml-4">Trier :</label>
+  <select v-model="sort" class="border border-blue-plumepixel px-2 py-1 text-sm">
     <option value="date-desc">Du + récent au + ancien</option>
     <option value="date-asc">Du + ancien au + récent</option>
     <option value="title-asc">Titre A → Z</option>
@@ -78,7 +78,7 @@ const filtered = computed(() => {
   </select>
 
   <label class="text-sm font-medium">Nature :</label>
-  <select v-model="filterType" class="border px-2 py-1 rounded text-sm">
+  <select v-model="filterType" class="border px-2 py-1 text-sm border-blue-plumepixel">
     <option value="all">Tous</option>
     <option value="image">Images</option>
     <option value="audio">Audio</option>
@@ -90,7 +90,7 @@ const filtered = computed(() => {
   <input
     type="text"
     v-model="filterTags"
-    class="border px-2 py-1 rounded text-sm"
+    class="border px-2 py-1 text-sm border-blue-plumepixel"
     placeholder="noël, vidéo"
   >
 </div>
