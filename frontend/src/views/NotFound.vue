@@ -4,7 +4,7 @@
     
     <div class="-mt-12 relative z-10">
       <h2 class="text-3xl font-[PlumePixel] text-blue-plumepixel mb-4">
-        Oups ! Cette œuvre n'existe pas...
+        Oups ! Cette page n'existe pas...
       </h2>
       
       <p class="text-gray-600 mb-8 max-w-md mx-auto">

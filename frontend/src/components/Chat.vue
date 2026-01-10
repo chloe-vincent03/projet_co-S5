@@ -15,7 +15,9 @@ const userStore = useUserStore();
 const chat = useChatStore();
 
 const text = ref("");
-const messagesEnd = ref(null);
+
+const messagesContainer = ref(null);
+
 
 // init socket + charger historique
 watch(
@@ -26,21 +28,39 @@ watch(
     chat.init(userStore.user.user_id);
     await chat.loadHistory(id);
 
-    // 🔥 charger l'utilisateur avec qui on discute
     const res = await api.get(`/auth/users/${id}`);
     receiver.value = res.data;
+
+    // ✅ scroll immédiat en bas (PAS smooth)
+    await nextTick();
+    messagesContainer.value.scrollTop =
+      messagesContainer.value.scrollHeight;
   },
   { immediate: true }
 );
 
+
 // auto-scroll
+let previousLength = 0;
+
 watch(
   () => chat.messages.length,
-  async () => {
-    await nextTick();
-    messagesEnd.value?.scrollIntoView({ behavior: "smooth" });
+  async (newLength) => {
+    if (!messagesContainer.value) return;
+
+    // 🔥 seulement si un message est ajouté (pas au chargement)
+    if (newLength > previousLength) {
+      await nextTick();
+      messagesContainer.value.scrollTo({
+        top: messagesContainer.value.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+
+    previousLength = newLength;
   }
 );
+
 
 const send = () => {
   if (!text.value.trim()) return;
@@ -59,55 +79,101 @@ const formatTime = (date) => {
 
 
 const receiver = ref(null);
+
+const fileInput = ref(null);
+
+const sendImage = async (file) => {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const res = await api.post("/messages/image", formData);
+
+  chat.sendMessage(
+    userStore.user.user_id,
+    "",
+    res.data.image_url
+  );
+};
+
 </script>
 
 <template>
   <section class="flex flex-col flex-1 ">
 
     <!-- HEADER -->
-    <header class="h-16 bg-white">
-      <div class="max-w-3xl mx-auto px-4 h-full flex items-center gap-3">
-        <img v-if="receiver?.avatar" :src="receiver.avatar" class="w-9 h-9 object-cover border border-blue-600" />
-        <div v-if="receiver">
-          <div class="font-semibold leading-tight">
-            {{ receiver.first_name }} {{ receiver.last_name }}
-          </div>
-          <div class="text-xs text-gray-500">
-            @{{ receiver.username }}
-          </div>
+   <header class="h-14 bg-white flex items-center px-4 gap-3 ">
+      <!-- bouton retour MOBILE -->
+      <button @click="$emit('back')" class="lg:hidden text-blue-600 font-medium">
+        ←
+      </button>
+
+      <div>
+        <div class="font-semibold">
+          {{ receiver?.first_name }} {{ receiver?.last_name }}
+        </div>
+        <div class="text-xs text-gray-500">
+          @{{ receiver?.username }}
         </div>
       </div>
     </header>
 
     <!-- MESSAGES -->
-    <main class="flex-1 overflow-y-auto py-6">
+    <main ref="messagesContainer" class="flex-1 overflow-y-auto py-6">
       <div class="max-w-3xl mx-auto px-4 space-y-4">
 
-        <div v-for="(m, i) in chat.messages" :key="m.id || i" class="flex"
-          :class="m.sender_id === userStore.user.user_id ? 'justify-end' : 'justify-start'">
-          <div :class="[
-            'max-w-[65%] px-4 py-3 text-sm border',
-            m.sender_id === userStore.user.user_id
-              ? 'bg-blue-600 text-white border-blue-600'
-              : 'bg-white text-gray-800 border-blue-600'
-          ]">
-            <p class="whitespace-pre-line break-words">
-              {{ m.content }}
-            </p>
+<div
+  v-for="(m, i) in chat.messages"
+  :key="m.id || i"
+  class="flex"
+  :class="m.sender_id === userStore.user.user_id ? 'justify-end' : 'justify-start'"
+>
+  <div
+    :class="[
+      'max-w-[65%] px-3 py-2 text-sm border',
+      m.sender_id === userStore.user.user_id
+        ? 'bg-blue-600 text-white border-blue-600'
+        : 'bg-white text-gray-800 border-blue-600'
+    ]"
+  >
+    <!-- 🖼️ IMAGE -->
+           <img
+  v-if="m.image_url"
+  :src="`http://localhost:3000${m.image_url}`"
+  class="max-w-full rounded-sm mb-1"
+/>
 
-            <div class="mt-1 text-[10px] opacity-60 text-right">
-              {{ formatTime(m.created_at) }}
-            </div>
-          </div>
-        </div>
 
-        <div ref="messagesEnd"></div>
+    
+
+    <!-- 💬 TEXTE -->
+    <p
+      v-if="m.content"
+      class="whitespace-pre-line break-words"
+    >
+      {{ m.content }}
+    </p>
+
+    <!-- ⏱️ HEURE -->
+    <div class="mt-1 text-[10px] opacity-60 text-right">
+      {{ formatTime(m.created_at) }}
+    </div>
+  </div>
+</div>
+
+
       </div>
     </main>
 
     <!-- INPUT -->
     <footer class=" bg-white py-3">
       <div class="max-w-3xl mx-auto px-4 flex items-center gap-3">
+        <input ref="fileInput" type="file" accept="image/*" class="hidden"
+          @change="e => sendImage(e.target.files[0])" />
+
+        <button @click="fileInput.click()" class="border border-blue-600 px-3 py-2 text-blue-600
+         hover:bg-blue-600 hover:text-white transition">
+          📷
+        </button>
         <input v-model="text" @keyup.enter="send" placeholder="Écrire un message…" class="flex-1 bg-transparent border border-blue-600 px-4 py-2 outline-none
                  focus:ring-1 focus:ring-blue-600" />
         <MyButton @click="send" :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }">

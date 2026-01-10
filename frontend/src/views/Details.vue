@@ -60,6 +60,21 @@ async function deleteItem() {
     alert("Erreur réseau");
   }
 }
+
+const goToProfile = (profileUserId) => {
+  const myId = userStore.user?.user_id;
+
+  if (!myId) return;
+
+  // 🔥 MON PROFIL → page perso
+  if (profileUserId === myId) {
+    router.push("/profil"); // ou /mon-profil /settings
+  }
+  // 👤 AUTRE UTILISATEUR → profil public
+  else {
+    router.push(`/profil/${profileUserId}`);
+  }
+};
 </script>
 
 <template>
@@ -170,14 +185,10 @@ async function deleteItem() {
               <p class="text-xs text-gray-500">@{{ item.username }}</p>
             </div>
           </div>
-          <MyButton
-      :to="`/profil/${item.user_id}`"
-      icon="voir"
-      size="small"
-      font="inter"
-      :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"
-    >
-Voir le profil    </MyButton>
+          <MyButton icon="voir" size="small" font="inter" :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"
+            @click="goToProfile(item.user_id)">
+            Voir le profil
+          </MyButton>
 
         </div>
 

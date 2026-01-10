@@ -1,6 +1,11 @@
 import express from "express";
 import db from "../config/database.js";
 import { authenticateSession } from "../middleware/auth.js";
+import upload from "../middleware/upload.js";
+import multer from "multer";
+import path from "path";
+
+
 
 const router = express.Router();
 const DB = db.getDB();
@@ -60,5 +65,22 @@ router.get("/:otherUserId", authenticateSession, (req, res) => {
     }
   );
 });
+
+router.post(
+  "/image",
+  authenticateSession,
+  upload.single("image"),
+  (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "Aucune image reçue" });
+    }
+
+    res.json({
+      image_url: `/uploads/chat/${req.file.filename}`,
+    });
+  }
+);
+
+
 
 export default router;
