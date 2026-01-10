@@ -17,6 +17,7 @@ import PolitiqueConfidentialite from "@/views/PolitiqueConfidentialite.vue";
 import CGU from "@/views/CGU.vue";
 import Contact from "@/views/Contact.vue";
 import CoupDeCoeur from "@/views/coupDeCoeur.vue";
+import Galerie from "@/views/Galerie.vue";
 
 
 const routes = [
@@ -101,6 +102,11 @@ const routes = [
     name: "coups-de-coeur",
     component: CoupDeCoeur,
   },
+  {
+    path: "/galerie",
+    name: "galerie",
+    component: Galerie,
+  },
 ];
 
 const router = createRouter({
@@ -125,8 +131,21 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.guestOnly && store.isLoggedIn) {
     return next("/");
   }
+  
 
   next();
+});
+
+router.beforeEach((to) => {
+  const userStore = useUserStore();
+
+  // ✅ si l’utilisateur est connecté et veut accéder à la landing
+  if (to.path === "/" && userStore.isLoggedIn) {
+    return "/galerie";
+  }
+
+  // sinon on laisse passer
+  return true;
 });
 
 export default router;
