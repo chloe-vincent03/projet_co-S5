@@ -79,7 +79,8 @@ defineProps({
           leading-relaxed
           bg-white
         ">
-                {{ item.content || "" }}
+                {{ (item.content || "").replace(/\\n/g, '\n') }}
+
             </div>
 
         </RouterLink>
