@@ -88,38 +88,37 @@ io.on("connection", (socket) => {
 
   //  Le client envoie un message
 socket.on("message", (data) => {
-  const { sender_id, receiver_id, content } = data;
+  const { sender_id, receiver_id, content, image_url } = data;
 
-  const createdAt = new Date().toISOString(); // 🔥 UTC UNIQUE
+  const createdAt = new Date().toISOString();
 
-  // 1️⃣ enregistrer en DB (UTC)
   db.getDB().run(
     `
-    INSERT INTO Messages (sender_id, receiver_id, content, created_at)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO Messages (sender_id, receiver_id, content, image_url, created_at)
+    VALUES (?, ?, ?, ?, ?)
     `,
-    [sender_id, receiver_id, content, createdAt],
+    [sender_id, receiver_id, content, image_url, createdAt],
     function (err) {
       if (err) {
         console.error("❌ Erreur insert message:", err);
         return;
       }
 
-      // 2️⃣ message COMPLET envoyé au client
       const savedMessage = {
         id: this.lastID,
         sender_id,
         receiver_id,
         content,
-        created_at: createdAt, // 🔥 LA CLÉ
+        image_url,
+        created_at: createdAt,
       };
 
-      // 3️⃣ émettre au receveur + à l’envoyeur
       io.to(`user:${receiver_id}`).emit("message", savedMessage);
       io.to(`user:${sender_id}`).emit("message", savedMessage);
     }
   );
 });
+
 
   socket.on("disconnect", () => {
     console.log("client déconnecté :", socket.id);

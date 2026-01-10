@@ -119,11 +119,9 @@ const deleteUser = async () => {
     Collaborations
   </button>
    <div v-if="user">
-    <h1>{{ user.username }}</h1>
-
-    <button @click="goToChat">
+    <MyButton :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }" @click="goToChat">
       Envoyer un message
-    </button>
+    </MyButton>
   </div>
 
   <div v-else>

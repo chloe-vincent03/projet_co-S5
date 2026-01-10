@@ -45,13 +45,14 @@ export const useChatStore = defineStore("chat", {
     },
 
     // ✉️ envoyer un message
-    sendMessage(senderId, content) {
-      if (!this.receiverId || !content.trim()) return;
+    sendMessage(senderId, content = null, image_url = null) {
+      if (!this.receiverId) return;
 
       socket.emit("message", {
         sender_id: senderId,
         receiver_id: this.receiverId,
         content,
+        image_url,
       });
     },
   },

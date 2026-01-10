@@ -8,6 +8,9 @@ import { useRoute } from "vue-router";
 
 const route = useRoute();
 
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const chatStore = useChatStore();
 
@@ -60,15 +63,6 @@ last_date: msg.created_at ?? new Date().toISOString()
   }
 );
 
-watch(
-  () => route.query.userId,
-  (id) => {
-    if (id) {
-      activeUserId.value = Number(id);
-    }
-  },
-  { immediate: true }
-);
 
 watch(
   () => chatStore.lastMessage,
@@ -115,16 +109,30 @@ watch(
 
 
 
-const openChat = (userId) => {
-  activeUserId.value = userId;
-};
-const formatDate = (date) => {
-  return new Date(date).toLocaleTimeString("fr-FR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Paris", // ✅
+// const openChat = (userId) => {
+//   activeUserId.value = userId;
+// };
+// const formatDate = (date) => {
+//   return new Date(date).toLocaleTimeString("fr-FR", {
+//     hour: "2-digit",
+//     minute: "2-digit",
+//     timeZone: "Europe/Paris", // ✅
+//   });
+// };
+
+const openConversation = (userId) => {
+  router.replace({
+    query: { userId },
   });
 };
+
+watch(
+  () => route.query.userId,
+  (id) => {
+    activeUserId.value = id ? Number(id) : null;
+  },
+  { immediate: true }
+);
 
 
 
@@ -133,31 +141,20 @@ const formatDate = (date) => {
 <template>
   <div class="flex h-[calc(100vh-80px)] bg-white">
 
-    <!-- COLONNE GAUCHE -->
-    <aside class="w-72 border-r overflow-y-auto">
-      <div class="p-4 font-semibold">Messages</div>
+    <!-- COLONNE GAUCHE : conversations -->
+    <aside class="border-r overflow-y-auto
+             w-full lg:w-72
+             " :class="activeUserId ? 'hidden lg:block' : 'block'">
+      <div class="p-4 lg:text-2xl text-xl text-blue-plumepixel font-[PlumePixel]">Messages</div>
 
-      <div
-        v-for="c in conversations"
-        :key="c.user_id"
-        @click="openChat(c.user_id)"
-        class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-100"
-      >
-        <img
-          class="w-10 h-10 rounded-full object-cover"
-          :src="c.avatar || '/avatar.png'"
-        />
+      <div v-for="c in conversations" :key="c.user_id" @click="openConversation(c.user_id)"
+        class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-100">
+        <img class="w-10 h-10 object-cover border border-blue-600" :src="c.avatar || '/avatar.png'" />
 
         <div class="flex-1 min-w-0">
-          <div class="flex justify-between items-center">
-            <div class="font-medium truncate">
-              {{ c.username }}
-            </div>
-            <div class="text-xs text-gray-400">
-              {{ formatDate(c.last_date) }}
-            </div>
+          <div class="font-medium truncate">
+            {{ c.username }}
           </div>
-
           <div class="text-xs text-gray-500 truncate">
             {{ c.last_message }}
           </div>
@@ -165,18 +162,14 @@ const formatDate = (date) => {
       </div>
     </aside>
 
-    <!-- COLONNE DROITE -->
-    <Chat
-      v-if="activeUserId"
-      :receiverId="activeUserId"
-    />
+    <!-- COLONNE DROITE : chat -->
+    <section class="flex-1" :class="!activeUserId ? 'hidden lg:flex' : 'flex'">
+      <Chat v-if="activeUserId" :receiverId="activeUserId" @back="activeUserId = null" />
 
-    <div
-      v-else
-      class="flex-1 flex items-center justify-center text-gray-400"
-    >
-      Sélectionne une conversation
-    </div>
+      <div v-else class="flex-1 hidden lg:flex items-center justify-center text-gray-400">
+        Sélectionne une conversation
+      </div>
+    </section>
 
   </div>
 </template>
