@@ -1,4 +1,4 @@
-<!-- <script setup>
+<script setup>
 import { ref, onMounted, computed } from 'vue';
 import GalleryItem from '../components/GalleryItems.vue';
 import { useUserStore } from "../stores/user";
@@ -115,21 +115,4 @@ const filtered = computed(() => {
  </section>
 </template>
 
- -->
 
- <script setup>
-import { computed } from "vue";
-import { useUserStore } from "@/stores/user";
-
-import LandingPage from "@/views/LandingPage.vue";
-import Galerie from "@/views/Galerie.vue";
-
-const userStore = useUserStore();
-
-const isLoggedIn = computed(() => userStore.isLoggedIn);
-</script>
-
-<template>
-  <LandingPage v-if="!isLoggedIn" />
-  <Galerie v-else />
-</template>
