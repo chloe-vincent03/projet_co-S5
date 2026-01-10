@@ -3,6 +3,8 @@ import MyButton from "@/components/MyButton.vue";
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
+import LikeButton from "@/components/LikeButton.vue";
+
 
 const route = useRoute();
 const router = useRouter(); // Pour la redirection après suppression
@@ -24,8 +26,12 @@ onMounted(async () => {
 
   try {
     const res = await fetch(
-      `http://localhost:3000/api/media/${route.params.id}`
+      `http://localhost:3000/api/media/${route.params.id}`,
+      {
+        credentials: "include" // 🔥 OBLIGATOIRE
+      }
     );
+
 
     const txt = await res.text();
     console.log("Réponse brute :", txt); 
@@ -33,7 +39,13 @@ onMounted(async () => {
     if (!res.ok) throw new Error(`Erreur HTTP : ${res.status}`);
 
     const data = JSON.parse(txt);
-    item.value = data;
+    item.value = {
+      ...data,
+      likes_count: Number(data.likes_count) || 0,
+      is_liked: !!data.is_liked
+    };
+
+
   } catch (err) {
     console.error("Erreur lors du fetch :", err);
   }
@@ -143,7 +155,7 @@ const goToProfile = (profileUserId) => {
           <h1 class="text-xl md:text-3xl font-['PlumePixel']">
             {{ item.title }}
           </h1>
-          
+          <LikeButton v-if="item" :item="item" />
           <!-- Badge Privé/Public (visible uniquement pour le propriétaire) -->
           <span 
             v-if="isOwner"
