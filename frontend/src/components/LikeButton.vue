@@ -1,7 +1,11 @@
 <script setup>
 import { useUserStore } from "@/stores/user";
 import api from "@/api/axios";
+import { ref, watch } from "vue";
+
 const userStore = useUserStore();
+
+
 
 const props = defineProps({
   item: {
@@ -10,29 +14,41 @@ const props = defineProps({
   },
 });
 
-// Fonction principale : like / unlike
-async function toggleLike() {
-  const media = props.item;
+const isLiked = ref(props.item.is_liked);
 
-  if (!userStore.isLoggedIn) {
-    alert("Tu dois être connecté pour liker.");
-    return;
-  }
-
+const toggleLike = async () => {
   try {
-    if (media.is_liked) {
-      await api.delete(`/media/${media.id}/like`);
-      media.is_liked = false;
-      media.likes_count = Math.max(0, media.likes_count - 1);
+    if (isLiked.value) {
+      await api.delete(
+        `http://localhost:3000/api/media/${props.item.id}/like`,
+        { withCredentials: true }
+      );
+      props.item.likes_count--;
+      props.item.is_liked = false;
+      isLiked.value = false;
     } else {
-      await api.post(`/media/${media.id}/like`);
-      media.is_liked = true;
-      media.likes_count++;
+      await api.post(
+        `http://localhost:3000/api/media/${props.item.id}/like`,
+        {},
+        { withCredentials: true }
+      );
+      props.item.likes_count++;
+      props.item.is_liked = true;
+      isLiked.value = true;
     }
-  } catch (error) {
-    console.error("Erreur toggleLike:", error);
+  } catch (err) {
+    console.error("Erreur toggleLike:", err);
   }
-}
+};
+
+watch(
+  () => props.item.is_liked,
+  (newVal) => {
+    isLiked.value = newVal;
+  },
+  { immediate: true }
+);
+
 </script>
 
 <template>
@@ -75,6 +91,6 @@ async function toggleLike() {
       />
     </svg>
 
-    <span class="text-sm">{{ item.likes_count }}</span>
+    <span class="text-sm"> {{ props.item.likes_count }}</span>
   </button>
 </template>

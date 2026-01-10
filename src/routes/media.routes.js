@@ -92,15 +92,22 @@ router.get('/threads', optionalAuth, (req, res) => {
   });
 });
 
-router.get('/:id', optionalAuth, (req, res) => {
+router.get("/:id", optionalAuth, (req, res) => {
   const id = req.params.id;
+  const userId = req.user?.user_id || null;
 
   const sql = `
     SELECT 
-      m.id, m.title, m.description, m.type, m.url, m.content, m.created_at, m.is_public, m.allow_collaboration,
+      m.id, m.title, m.description, m.type, m.url, m.content,
+      m.created_at, m.is_public, m.allow_collaboration,
       m.user_id,
-      u.username, u.first_name, u.last_name,
-      GROUP_CONCAT(t.name) AS tags
+      u.username,
+      GROUP_CONCAT(t.name) AS tags,
+
+      -- 🔥 AJOUTS ICI
+      (SELECT COUNT(*) FROM likes WHERE media_id = m.id) AS likes_count,
+      (SELECT 1 FROM likes WHERE user_id = ? AND media_id = m.id) AS is_liked
+
     FROM media m
     LEFT JOIN users u ON m.user_id = u.user_id
     LEFT JOIN media_tags mt ON m.id = mt.media_id
@@ -109,30 +116,26 @@ router.get('/:id', optionalAuth, (req, res) => {
     GROUP BY m.id
   `;
 
-  db.get(sql, [id], (err, row) => {
-    if (err) {
-      console.error("SQL ERROR:", err);
-      return res.status(500).json({ error: "Erreur serveur" });
-    }
+  db.get(sql, [userId, id], (err, row) => {
+    if (err) return res.status(500).json({ error: "Erreur serveur" });
     if (!row) return res.status(404).json({ error: "Média introuvable" });
 
     const media = {
       ...row,
-      tags: row.tags ? row.tags.split(',') : []
+      tags: row.tags ? row.tags.split(",") : [],
+      likes_count: row.likes_count ?? 0,
+      is_liked: !!row.is_liked,
     };
 
-    // Récupérer les collaborations (enfants)
+    // collaborations
     const collabsSql = `
       SELECT id, title, type, url, created_at, user_id 
       FROM media 
-      WHERE parent_id = ? 
+      WHERE parent_id = ?
       ORDER BY created_at ASC
     `;
 
     db.all(collabsSql, [id], (err, children) => {
-      if (err) console.error("Erreur récup collabs:", err);
-
-      // On ajoute la liste des collaborations à l'objet retourné
       media.collaborations = children || [];
       res.json(media);
     });
