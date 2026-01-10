@@ -4,6 +4,9 @@ import GalleryItem from '../components/GalleryItems.vue';
 import { useUserStore } from "../stores/user";
 import { useRouter } from "vue-router";
 import axios from 'axios';
+import GalleryItems from '../components/GalleryItems.vue';
+import MediaCard from '@/components/MediaCard.vue';
+import MyButton from '@/components/MyButton.vue';
 
 
 const store = useUserStore();
@@ -61,13 +64,13 @@ const filtered = computed(() => {
 <template>
 
 
-
-<h1 class="font-[PlumePixel] text-3xl mb-4">Galerie des œuvres</h1>
+<section class="p-6">
+<h1 class="font-[PlumePixel] text-3xl mb-4 ml-4 text-blue-plumepixel">Galerie des œuvres</h1>
 
 <div class="flex flex-wrap items-center gap-4 mb-6">
 
-  <label class="text-sm font-medium">Trier :</label>
-  <select v-model="sort" class="border px-2 py-1 rounded text-sm">
+  <label class="text-sm font-medium ml-4">Trier :</label>
+  <select v-model="sort" class="border border-blue-plumepixel px-2 py-1 text-sm">
     <option value="date-desc">Du + récent au + ancien</option>
     <option value="date-asc">Du + ancien au + récent</option>
     <option value="title-asc">Titre A → Z</option>
@@ -75,7 +78,7 @@ const filtered = computed(() => {
   </select>
 
   <label class="text-sm font-medium">Nature :</label>
-  <select v-model="filterType" class="border px-2 py-1 rounded text-sm">
+  <select v-model="filterType" class="border px-2 py-1 text-sm border-blue-plumepixel">
     <option value="all">Tous</option>
     <option value="image">Images</option>
     <option value="audio">Audio</option>
@@ -87,7 +90,7 @@ const filtered = computed(() => {
   <input
     type="text"
     v-model="filterTags"
-    class="border px-2 py-1 rounded text-sm"
+    class="border px-2 py-1 text-sm border-blue-plumepixel"
     placeholder="noël, vidéo"
   >
 </div>
@@ -97,20 +100,19 @@ const filtered = computed(() => {
   Aucune œuvre ne correspond à ce(s) tag(s).
 </div>
 
-<div class="columns-6 gap-4 space-y-4 px-4">
-  <GalleryItem
-    v-for="item in filtered"
-    :key="item.id"
-    :item="item"
-    class="break-inside-avoid block border border-blue-plumepixel overflow-hidden shadow-sm"
-  />
-</div>
+  <div class="columns-2 sm:columns-3 lg:columns-4 gap-4 px-4">
+      <MediaCard v-for="item in filtered" :key="item.id" :item="item" />
+    </div>
+
+
+
 
 <router-link to="/ajouter">
-  <button class="fixed bottom-20 right-6 bg-blue-plumepixel text-white px-5 py-3 rounded-full shadow-lg font-[PlumePixel]">
+  <MyButton class="fixed bottom-20 right-6 " :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }" icon="plume">
     Crée
-  </button>
+  </MyButton>
 </router-link>
+ </section>
 </template>
 
 
