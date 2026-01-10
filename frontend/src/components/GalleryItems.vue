@@ -61,36 +61,49 @@ const props = defineProps({
 </script>
 
 <template>
- <div class="media-card">
-    <!-- carte cliquable vers la page détail -->
-    <RouterLink :to="'/oeuvre/' + item.id" class="block">
-      <img v-if="item.type === 'image'" :src="item.url" :alt="item.title" />
+  <div class="relative border border-blue-plumepixel bg-white
+           overflow-hidden hover:shadow-md transition">
+    <!-- MEDIA -->
+    <RouterLink :to="`/oeuvre/${item.id}`" class="block">
+      <!-- IMAGE -->
+      <img v-if="item.type === 'image'" :src="item.url" :alt="item.title" class="w-full aspect-square object-cover" />
 
-      <div v-else-if="item.type === 'audio'">🎵 {{ item.title }}</div>
-      <div v-else-if="item.type === 'video'">🎬 {{ item.title }}</div>
-    <div
-  v-else-if="item.type === 'text'"
-  class="whitespace-pre-line"
->
-  {{ item.content.replace(/\\n/g, '\n').slice(0, 150) + "…" }}
-</div>
+      <!-- AUDIO -->
+      <div v-else-if="item.type === 'audio'" class="w-full aspect-square flex flex-col
+               items-center justify-center bg-pink-50 text-sm">
+        🎵
+        <span class="mt-2 font-medium text-center px-2">
+          {{ item.title }}
+        </span>
+      </div>
 
+      <!-- VIDEO -->
+      <div v-else-if="item.type === 'video'" class="w-full aspect-square flex flex-col
+               items-center justify-center bg-pink-50 text-sm">
+        🎬
+        <span class="mt-2 font-medium text-center px-2">
+          {{ item.title }}
+        </span>
+      </div>
+
+      <!-- TEXTE -->
+      <div v-else-if="item.type === 'text'" class="w-full aspect-square p-4 text-sm
+               whitespace-pre-line overflow-hidden
+               bg-pink-50">
+        {{ item.content.replace(/\\n/g, '\n').slice(0, 140) }}…
+      </div>
     </RouterLink>
 
-    <!-- bouton like -->
-         <LikeButton :item="item" class="mt-2" />
+    <!-- LIKE -->
+    <div class="absolute bottom-2 left-2">
+      <LikeButton :item="item" />
+    </div>
 
-    <!-- <button
-      type="button"
-      @click.stop="toggleLike"
-      class="flex items-center gap-1 mt-2"
-    >
-      <span v-if="item.is_liked">❤️</span>
-      <span v-else>🤍</span>
-      <span>{{ item.likes_count ?? 0 }}</span>
-    </button> -->
-  </div>
-  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-    <GalleryItem v-for="item in (items || []).filter(Boolean)" :key="item.id" :item="item" />
+    <!-- BADGE -->
+    <span class="absolute top-2 right-2 text-xs px-2 py-1
+             border border-blue-plumepixel bg-white">
+      Œuvre
+    </span>
   </div>
 </template>
+

@@ -4,6 +4,9 @@ import GalleryItem from '../components/GalleryItems.vue';
 import { useUserStore } from "../stores/user";
 import { useRouter } from "vue-router";
 import axios from 'axios';
+import GalleryItems from '../components/GalleryItems.vue';
+import MediaCard from '@/components/MediaCard.vue';
+import MyButton from '@/components/MyButton.vue';
 
 
 const store = useUserStore();
@@ -61,7 +64,7 @@ const filtered = computed(() => {
 <template>
 
 
-
+<section class="p-6">
 <h1 class="font-[PlumePixel] text-3xl mb-4">Galerie des œuvres</h1>
 
 <div class="flex flex-wrap items-center gap-4 mb-6">
@@ -97,20 +100,19 @@ const filtered = computed(() => {
   Aucune œuvre ne correspond à ce(s) tag(s).
 </div>
 
-<div class="columns-6 gap-4 space-y-4 px-4">
-  <GalleryItem
-    v-for="item in filtered"
-    :key="item.id"
-    :item="item"
-    class="break-inside-avoid block border border-blue-plumepixel overflow-hidden shadow-sm"
-  />
-</div>
+  <div class="columns-2 sm:columns-3 lg:columns-4 gap-4 px-4">
+      <MediaCard v-for="item in filtered" :key="item.id" :item="item" />
+    </div>
+
+
+
 
 <router-link to="/ajouter">
-  <button class="fixed bottom-20 right-6 bg-blue-plumepixel text-white px-5 py-3 rounded-full shadow-lg font-[PlumePixel]">
+  <MyButton class="fixed bottom-20 right-6 " :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }" icon="plume">
     Crée
-  </button>
+  </MyButton>
 </router-link>
+ </section>
 </template>
 
 
