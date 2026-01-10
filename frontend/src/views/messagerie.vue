@@ -30,38 +30,6 @@ watch(
   { immediate: true }
 );
 
-watch(
-  () => chatStore.lastMessage,
-  (msg) => {
-    if (!msg || !userStore.user) return;
-
-    const myId = userStore.user.user_id;
-
-    // 👉 identifier l'autre utilisateur de la conversation
-    const otherUserId =
-      msg.sender_id === myId ? msg.receiver_id : msg.sender_id;
-
-    const index = conversations.value.findIndex(
-      (c) => c.user_id === otherUserId
-    );
-
-    const updatedConversation = {
-      user_id: otherUserId,
-      username: conversations.value[index]?.username,
-      avatar: conversations.value[index]?.avatar,
-      last_message: msg.content,
-last_date: msg.created_at ?? new Date().toISOString()
-    };
-
-    // 🔥 si la conversation existe déjà → on la retire
-    if (index !== -1) {
-      conversations.value.splice(index, 1);
-    }
-
-    // 🔥 on la remet en haut
-    conversations.value.unshift(updatedConversation);
-  }
-);
 
 
 watch(
@@ -70,7 +38,6 @@ watch(
     if (!msg || !userStore.user) return;
 
     const myId = userStore.user.user_id;
-
     const otherUserId =
       msg.sender_id === myId ? msg.receiver_id : msg.sender_id;
 
@@ -81,44 +48,30 @@ watch(
     let username;
     let avatar;
 
-    // 🟢 CAS 1 : la conversation existe déjà
+    // 🟢 Conversation existante
     if (index !== -1) {
       username = conversations.value[index].username;
       avatar = conversations.value[index].avatar;
 
       conversations.value.splice(index, 1);
     }
-    // 🔥 CAS 2 : NOUVELLE conversation → on fetch l'utilisateur
+    // 🔥 NOUVELLE conversation → fetch user
     else {
       const res = await api.get(`/auth/users/${otherUserId}`);
       username = res.data.username;
       avatar = res.data.avatar;
     }
 
-    const updatedConversation = {
+    conversations.value.unshift({
       user_id: otherUserId,
       username,
       avatar,
       last_message: msg.content,
       last_date: msg.created_at ?? new Date().toISOString(),
-    };
-
-    conversations.value.unshift(updatedConversation);
+    });
   }
 );
 
-
-
-// const openChat = (userId) => {
-//   activeUserId.value = userId;
-// };
-// const formatDate = (date) => {
-//   return new Date(date).toLocaleTimeString("fr-FR", {
-//     hour: "2-digit",
-//     minute: "2-digit",
-//     timeZone: "Europe/Paris", // ✅
-//   });
-// };
 
 const openConversation = (userId) => {
   router.replace({
@@ -142,7 +95,7 @@ watch(
   <div class="flex h-[calc(100vh-80px)] bg-white">
 
     <!-- COLONNE GAUCHE : conversations -->
-    <aside class="border-r overflow-y-auto
+    <aside class="border-r border-r-blue-plumepixel overflow-y-auto
              w-full lg:w-72
              " :class="activeUserId ? 'hidden lg:block' : 'block'">
       <div class="p-4 lg:text-2xl text-xl text-blue-plumepixel font-[PlumePixel]">Messages</div>

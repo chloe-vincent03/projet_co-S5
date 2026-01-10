@@ -1,30 +1,20 @@
 <script setup>
 import { useUserStore } from "../../stores/user";
 import { useRouter } from "vue-router";
-import { ref, computed } from "vue";
+import { ref, computed, watchEffect } from "vue";
 import MyButton from "@/components/MyButton.vue";
 import api from "@/api/axios";
 
 const store = useUserStore();
 const router = useRouter();
-const selectedWorks = ref([]);
 
 const message = ref("");
-
-// user réactif basé sur le store
-// user réactif basé sur le store
-const user = computed(() => store.user);
-
 const allMedia = ref([]);
 const threads = ref([]);
+const activeTab = ref("galerie");
+
+const user = computed(() => store.user);
 const galerie = computed(() => allMedia.value);
-
-const activeTab = ref("galerie"); 
-
-
-
-// Charger les données quand le user est prêt
-import { watchEffect } from "vue";
 
 watchEffect(async () => {
   if (user.value && user.value.user_id) {
@@ -45,20 +35,6 @@ async function logout() {
   router.push("/login");
 }
 
-async function deleteAcc() {
-  const ok = confirm(
-    "Voulez-vous vraiment supprimer votre compte ? Cette action est irréversible."
-  );
-  if (!ok) return;
-
-  const res = await store.deleteAccount();
-
-  if (res.success) {
-    router.push("/register");
-  } else {
-    message.value = res.message || "Erreur lors de la suppression.";
-  }
-}
 function goToSettings() {
   router.push("/profil/settings");
 }
@@ -72,9 +48,7 @@ async function generateBook() {
 
     const res = await fetch("http://localhost:3000/api/book/pdf", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: `Livre de ${user.value.username}`,
         worksIds: allMedia.value.map((m) => m.id),
@@ -82,216 +56,171 @@ async function generateBook() {
       }),
     });
 
-    if (!res.ok) {
-      throw new Error("Erreur lors de la génération du PDF");
-    }
-
     const blob = await res.blob();
     const url = window.URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
     a.download = `Livre_${user.value.username}.pdf`;
     a.click();
-
     window.URL.revokeObjectURL(url);
   } catch (err) {
-    console.error(err);
-    message.value = "Impossible de générer le livre pour le moment.";
+    message.value = "Impossible de générer le livre.";
   }
 }
-
-
 </script>
 
 <template>
-  <div class="px-4 pt-24 lg:pt-32 lg:py-20">
+  <div class="px-4 pt-24 pb-16">
     <div class="max-w-5xl mx-auto">
-      <div class="flex flex-col lg:flex-row items-start lg:items-center gap-6">
-        <div
-          class="w-32 h-32 bg-gray-300 border border-blue-plumepixel rounded-lg overflow-hidden"
-        >
-          <img 
-            v-if="user?.avatar" 
-            :src="user.avatar" 
-            alt="Avatar" 
-            class="w-full h-full object-cover"
-          >
+
+      <!-- PROFIL -->
+      <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+        <div class="w-24 h-24 sm:w-32 sm:h-32 border border-blue-plumepixel rounded-lg overflow-hidden bg-gray-200">
+          <img v-if="user?.avatar" :src="user.avatar" class="w-full h-full object-cover" />
         </div>
 
-        <div>
+        <div class="text-center sm:text-left">
           <h1 class="text-3xl font-[PlumePixel] text-blue-plumepixel">
             {{ user?.first_name }} {{ user?.last_name }}
           </h1>
 
-          <p class="text-gray-600 text-sm">@{{ user?.username }}</p>
-
-          <p class="text-xs text-gray-500 mt-1">
+          <p class="text-sm text-gray-500">@{{ user?.username }}</p>
+          <p class="text-xs text-gray-400 mt-1">
             Membre depuis le
             {{ new Date(user?.created_at).toLocaleDateString("fr-FR") }}
           </p>
 
-          <p class="mt-1 max-w-xl text-gray-700 leading-relaxed">
+          <p class="mt-3 max-w-xl text-gray-700 leading-relaxed">
             {{ user?.bio || "Aucune bio renseignée." }}
           </p>
         </div>
       </div>
 
+      <!-- ACTIONS -->
       <div class="flex flex-col sm:flex-row gap-4 mt-8">
-        <MyButton
-          @click="goToSettings"
-          icon="setting"
-        :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"
-        >
+        <MyButton class="w-full sm:w-auto" @click="goToSettings" icon="setting"
+          :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }">
           Paramètres
         </MyButton>
 
-        <MyButton
-          @click="logout"
- :style="{
+        <MyButton class="w-full sm:w-auto" @click="logout" :style="{
           border: '2px solid var(--color-blue-plumepixel)',
           color: 'var(--color-blue-plumepixel)',
-        }"        >
+        }">
           Se déconnecter
         </MyButton>
       </div>
 
-      <p
-        v-if="user?.is_admin === 1"
-        class="mt-6 px-3 py-1 bg-yellow-300 text-black rounded text-sm w-fit"
-      >
-        Administrateur
-      </p>
+      <!-- BADGES -->
+      <div class="flex flex-wrap gap-3 mt-6">
+        <span v-if="user?.is_admin === 1" class="px-3 py-1 bg-yellow-300 text-black rounded text-sm">
+          Administrateur
+        </span>
 
-      <!-- Badge Compte Privé/Public -->
-      <p class="mt-2 px-3 py-1 rounded text-sm w-fit font-medium"
-         :class="user?.is_private === 1 ? 'bg-gray-200 text-gray-700' : 'bg-green-100 text-green-700'"
-      >
-        {{ user?.is_private === 1 ? 'Compte Privé' : 'Compte Public' }}
-      </p>
+        <span class="px-3 py-1 rounded text-sm font-medium"
+          :class="user?.is_private ? 'bg-gray-200 text-gray-700' : 'bg-green-100 text-green-700'">
+          {{ user?.is_private ? "Compte privé" : "Compte public" }}
+        </span>
+      </div>
 
-      <!-- MESSAGE -->
       <p v-if="message" class="mt-4 text-red-600">{{ message }}</p>
 
       <!-- TABS -->
-      <div class="flex gap-6 mt-16 text-blue-plumepixel font-[PlumePixel] text-lg border-b border-gray-200 pb-2">
-        <button
-          @click="activeTab = 'galerie'"
-          :class="activeTab === 'galerie' ? 'underline' : 'opacity-50 hover:opacity-100'"
-        >
-          Ma Galerie
+      <div class="
+          flex gap-6 mt-14
+          text-blue-plumepixel font-[PlumePixel] text-lg
+          border-b pb-2
+          overflow-x-auto
+        ">
+        <button class="whitespace-nowrap" @click="activeTab = 'galerie'"
+          :class="activeTab === 'galerie' ? 'underline' : 'opacity-50'">
+          Ma galerie
         </button>
 
-        <button
-          @click="activeTab = 'collab'"
-          :class="activeTab === 'collab' ? 'underline' : 'opacity-50 hover:opacity-100'"
-        >
-          Mes Collaborations
+        <button class="whitespace-nowrap" @click="activeTab = 'collab'"
+          :class="activeTab === 'collab' ? 'underline' : 'opacity-50'">
+          Collaborations
         </button>
       </div>
 
-       <!-- CONTENU DES ONGLETS -->
+      <!-- GALERIE -->
       <div v-if="activeTab === 'galerie'" class="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        <router-link
-          v-for="m in galerie"
-          :key="m.id"
-          :to="`/oeuvre/${m.id}`"
-        >
-          <div class="aspect-square bg-gray-200 relative group overflow-hidden rounded-lg">
-             <!-- Badge Privé -->
-             <div v-if="!m.is_public" class="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10 flex items-center gap-1">
-                🔒 Privé
-             </div>
-             
-             <img 
-               v-if="m.type === 'image'" 
-               :src="m.url" 
-               class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-             >
-
-             <video
-                v-else-if="m.type === 'video'"
-                :src="m.url"
-                class="w-full h-full object-cover"
-                muted
-                autoplay
-                loop
-             ></video>
-
-            <div
-                v-else
-                class="w-full h-full flex items-center justify-center p-4 bg-white text-center text-sm"
-            >
-                <div v-if="m.type === 'audio'">🎧 Audio</div>
-                <div v-else class="line-clamp-4">{{ m.content }}</div>
+        <router-link v-for="m in galerie" :key="m.id" :to="`/oeuvre/${m.id}`">
+          <div class="aspect-square bg-gray-200 relative overflow-hidden rounded-lg group">
+            <div v-if="!m.is_public"
+              class="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded z-10">
+              🔒 Privé
             </div>
-            
-            <!-- Overlay au survol -->
-            <div class="absolute inset-0 bg-blue-plumepixel/0 group-hover:bg-blue-plumepixel/20 transition-all duration-300"></div>
+
+            <img v-if="m.type === 'image'" :src="m.url"
+              class="w-full h-full object-cover group-hover:scale-110 transition" />
+
+            <video v-else-if="m.type === 'video'" :src="m.url" class="w-full h-full object-cover" muted playsinline
+              preload="metadata" />
+
+            <div v-else class="w-full h-full flex items-center justify-center p-4 text-center text-sm bg-white">
+              <span v-if="m.type === 'audio'">🎧 Audio</span>
+              <span v-else class="line-clamp-4">{{ m.content }}</span>
+            </div>
           </div>
+
           <div class="mt-2">
             <h3 class="font-bold truncate">{{ m.title }}</h3>
-            <p class="text-xs text-gray-500">{{ new Date(m.created_at).toLocaleDateString() }}</p>
+            <p class="text-xs text-gray-500">
+              {{ new Date(m.created_at).toLocaleDateString() }}
+            </p>
           </div>
         </router-link>
-        
-        <!-- Empty State Galerie -->
-        <div v-if="galerie.length === 0" class="col-span-full text-gray-500 text-sm italic">
-            Vous n'avez pas encore publié d'œuvres.
-        </div>
+
+        <p v-if="galerie.length === 0" class="col-span-full text-gray-500 italic">
+          Vous n'avez encore publié aucune œuvre.
+        </p>
       </div>
 
+      <!-- COLLABORATIONS -->
       <div v-if="activeTab === 'collab'" class="mt-8">
-        <div v-if="threads.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          
-          <!-- THREAD CARD -->
-          <div v-for="thread in threads" :key="thread.id" class="border border-blue-plumepixel p-2 flex flex-col gap-2 bg-white shadow-sm hover:shadow-md transition">
-            
-            <div class="flex gap-2 h-48">
-                <!-- GAUCHE : Image Principale (Parent) -->
-                <router-link :to="`/oeuvre/${thread.id}`" class="w-3/4 h-full relative group overflow-hidden bg-gray-100 border border-blue-200">
-                    <img v-if="thread.type === 'image'" :src="thread.url" class="w-full h-full object-cover">
-                    <video v-else-if="thread.type === 'video'" :src="thread.url" class="w-full h-full object-cover"></video>
-                    <div v-else class="w-full h-full flex items-center justify-center text-blue-500">
-                        <span v-if="thread.type === 'audio'" class="text-4xl">🎵</span>
-                        <span v-else class="text-xl font-['PlumePixel']">TxT</span>
-                    </div>
-                </router-link>
+        <div v-if="threads.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div v-for="thread in threads" :key="thread.id"
+            class="border border-blue-plumepixel p-3 bg-white hover:shadow-md transition">
+            <div class="flex flex-col sm:flex-row gap-2 sm:h-48">
+              <router-link :to="`/oeuvre/${thread.id}`"
+                class="w-full sm:w-3/4 h-48 sm:h-full bg-gray-100 overflow-hidden">
+                <img v-if="thread.type === 'image'" :src="thread.url" class="w-full h-full object-cover" />
+              </router-link>
 
-                <!-- DROITE : Miniatures (Enfants) -->
-                <div class="w-1/4 h-full flex flex-col gap-2">
-                    <div v-for="child in thread.children.slice(0, 2)" :key="child.id" class="h-1/2 w-full bg-gray-50 border border-blue-200 overflow-hidden relative">
-                        <router-link :to="`/oeuvre/${child.id}`" class="block w-full h-full">
-                            <img v-if="child.type === 'image'" :src="child.url" class="w-full h-full object-cover">
-                            <div v-else class="w-full h-full flex items-center justify-center text-blue-300">
-                                 <span v-if="child.type === 'audio'" class="text-xl">🎵</span>
-                                 <span v-else class="text-xs">TxT</span>
-                            </div>
-                        </router-link>
-                    </div>
-                    <!-- Empty slots if needed -->
-                    <div v-if="thread.children.length === 0" class="h-full w-full bg-gray-50 border border-dashed border-blue-200 flex items-center justify-center">
-                        <span class="text-xs text-gray-300 text-center">Pas de réponse</span>
-                    </div>
-                </div>
+              <div class="w-full sm:w-1/4 flex gap-2 sm:flex-col">
+                <router-link v-for="child in thread.children.slice(0, 2)" :key="child.id" :to="`/oeuvre/${child.id}`"
+                  class="h-24 sm:h-1/2 bg-gray-100 overflow-hidden">
+                  <img v-if="child.type === 'image'" :src="child.url" class="w-full h-full object-cover" />
+                </router-link>
+              </div>
             </div>
 
-            <!-- INFOS -->
-            <div class="mt-2 text-sm">
-                <h2 class="font-['PlumePixel'] text-lg truncate">{{ thread.title }}</h2>
-                <div class="flex justify-between text-gray-500 text-xs mt-1">
-                    <span>{{ thread.username }} {{ thread.children_count > 0 ? '+' + thread.children_count : '' }}</span>
-                    <span>{{ new Date(thread.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) }}</span>
-                </div>
+            <div class="mt-3 text-sm">
+              <h2 class="font-[PlumePixel] text-lg truncate">{{ thread.title }}</h2>
+              <div class="flex justify-between text-xs text-gray-500 mt-1">
+                <span>{{ thread.username }}</span>
+                <span>
+                  {{ new Date(thread.created_at).toLocaleDateString("fr-FR") }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-        <p v-else class="text-gray-600 text-sm">Vous n'avez participé à aucune collaboration.</p>
+
+        <p v-else class="text-gray-500 italic">
+          Aucune collaboration pour le moment.
+        </p>
       </div>
+
+      <!-- PDF -->
+      <div class="mt-12 flex justify-center">
+        <MyButton class="w-full sm:w-auto" :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }"
+          @click="generateBook">
+          Télécharger mon portfolio (PDF)
+        </MyButton>
+      </div>
+
     </div>
-   <MyButton class="ml-56 mt-5" :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }" @click="generateBook">
-      Télécharger mon portfolio (PDF)
-    </MyButton>
   </div>
- 
 </template>
