@@ -9,6 +9,7 @@ const sort = ref('date-desc');
 const filterType = ref('all');
 const filterTags = ref('');
 const filterAuthor = ref('');
+const filterStatus = ref('all');
 
 const filteredThreads = computed(() => {
   let items = [...threads.value];
@@ -16,6 +17,15 @@ const filteredThreads = computed(() => {
   // Filtrer par type (du parent)
   if (filterType.value !== 'all') {
     items = items.filter(i => i.type === filterType.value);
+  }
+
+  // Filtrer par statut
+  if (filterStatus.value !== 'all') {
+    items = items.filter(i => {
+       // Si pas de status défini, on considère c'est "open" par défaut pour l'instant, ou on exclut ?
+       // Le backend renvoie 'open' par défaut maintenant.
+       return i.status === filterStatus.value || (!i.status && filterStatus.value === 'open');
+    });
   }
 
   // Filtrer par tags (si le parent a des tags)
@@ -87,6 +97,16 @@ onMounted(async () => {
                 <option value="audio">Audio</option>
                 <option value="video">Vidéos</option>
                 <option value="text">Récit</option>
+            </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <label class="text-sm font-medium">Statut :</label>
+            <select v-model="filterStatus" class="border border-blue-plumepixel px-2 py-1 text-sm bg-white focus:outline-none">
+                <option value="all">Tous</option>
+                <option value="open">En recherche</option>
+                <option value="in_progress">En cours</option>
+                <option value="finished">Terminé</option>
             </select>
         </div>
 

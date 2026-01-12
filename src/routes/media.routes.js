@@ -47,7 +47,7 @@ router.get('/threads', optionalAuth, (req, res) => {
   console.log("⚡ FETCHING THREADS...");
   const sql = `
     SELECT 
-      m.id, m.title, m.description, m.type, m.url, m.created_at, m.user_id,
+      m.id, m.title, m.description, m.type, m.url, m.created_at, m.user_id, m.status,
       u.username,
       (SELECT COUNT(*) FROM media WHERE parent_id = m.id) as children_count
     FROM media m
@@ -100,7 +100,7 @@ router.get("/:id", optionalAuth, (req, res) => {
   const sql = `
     SELECT 
       m.id, m.title, m.description, m.type, m.url, m.content,
-      m.created_at, m.is_public, m.allow_collaboration,
+      m.created_at, m.is_public, m.allow_collaboration, m.status,
       m.user_id,
       u.username,
       GROUP_CONCAT(t.name) AS tags,
@@ -249,15 +249,16 @@ router.post('/', authenticateSession, upload.single('file'), async (req, res) =>
 
     // Insertion en base avec user_id
     const insertMediaSql = `
-    INSERT INTO media (title, description, type, url, content, user_id, parent_id, is_public, allow_collaboration)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO media (title, description, type, url, content, user_id, parent_id, is_public, allow_collaboration, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
     // Note: on utilise 'url' qui a été potentiellement mis à jour
     // parent_id peut être null ou un ID
     const parentId = req.body.parent_id || null;
+    const initialStatus = req.body.status || 'open';
 
-    db.run(insertMediaSql, [title, description, type, url, content, userId, parentId, finalPublicVal, finalCollabVal], function (err) {
+    db.run(insertMediaSql, [title, description, type, url, content, userId, parentId, finalPublicVal, finalCollabVal, initialStatus], function (err) {
       if (err) return res.status(500).json({ error: err.message });
 
       const mediaId = this.lastID;
@@ -629,11 +630,11 @@ router.put('/:id', authenticateSession, upload.single('file'), async (req, res) 
     // 2. Mise à jour de la table media
     const updateSql = `
       UPDATE media 
-      SET title = ?, description = ?, content = ?, url = ?, type = ?, is_public = ?, allow_collaboration = ?
+      SET title = ?, description = ?, content = ?, url = ?, type = ?, is_public = ?, allow_collaboration = ?, status = ?
       WHERE id = ?
     `;
 
-    db.run(updateSql, [title, description, content, url, type, publicVal, collabVal, mediaId], function (err) {
+    db.run(updateSql, [title, description, content, url, type, publicVal, collabVal, req.body.status || 'open', mediaId], function (err) {
       if (err) return res.status(500).json({ error: "Erreur lors de la mise à jour" });
 
       // 3. Mise à jour des tags (Suppression des anciens -> Ajout des nouveaux)
