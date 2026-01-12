@@ -42,7 +42,7 @@ onMounted(async () => {
 
         <ul v-else class="flex flex-col gap-4">
             <li v-for="n in likes" :key="n.like_id"
-                class="flex items-center gap-4 p-4 border border-blue-plumepixel bg-white rounded hover:shadow transition">
+                class="flex items-center gap-4 p-4 border border-blue-plumepixel bg-white hover:shadow ">
                 <!-- Avatar -->
                 <img v-if="n.avatar" :src="n.avatar" class="w-10 h-10 rounded-full object-cover" />
 
@@ -52,7 +52,7 @@ onMounted(async () => {
                         {{ n.username }}
                     </strong>
                     a aimé votre œuvre
-                    <RouterLink :to="`/oeuvre/${n.media_id}`" class="underline ml-1">
+                    <RouterLink :to="`/oeuvre/${n.media_id}`" class="underline ml-1 text-blue-plumepixel">
                         {{ n.title }}
                     </RouterLink>
                 </div>

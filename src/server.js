@@ -14,6 +14,8 @@ import bookRoutes from "./routes/book.routes.js";
 import notificationsRouter from "./routes/notification.routes.js";
 
 import db from "./config/database.js"; // pour enregistrer les messages
+const database = db.getDB();
+
 
 dotenv.config();
 
@@ -84,37 +86,39 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("🟢 Client connecté :", socket.id);
 
-  //  Le client envoie son user_id pour rejoindre sa "room"
   socket.on("register", (userId) => {
+    socket.userId = userId;
     socket.join(`user:${userId}`);
   });
 
-  //  Le client envoie un message
 socket.on("message", (msg) => {
-  this.lastMessage = msg;
+  if (!msg.sender_id || !msg.receiver_id) return;
 
-  const userStore = useUserStore();
-  const myId = userStore.user?.user_id;
+  // 💾 enregistrer le message en SQLite
+  database.run(
+    "INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)",
+    [msg.sender_id, msg.receiver_id, msg.content],
+    (err) => {
+      if (err) {
+        console.error("Erreur insertion message:", err.message);
+      }
+    }
+  );
 
-  // ✅ SI JE REÇOIS UN MESSAGE
-  if (msg.receiver_id === myId) {
-    // 🔴 incrément badge messages DIRECTEMENT
-    userStore.unreadMessagesCount++;
-  }
+  // 📤 envoyer au destinataire
+  io.to(`user:${msg.receiver_id}`).emit("message", msg);
 
-  // ✅ afficher dans le chat actif
-  if (
-    msg.sender_id === this.receiverId ||
-    msg.receiver_id === this.receiverId
-  ) {
-    this.messages.push(msg);
-  }
+  // 📤 renvoyer à l'expéditeur
+  io.to(`user:${msg.sender_id}`).emit("message", msg);
 });
+
 
   socket.on("disconnect", () => {
-    console.log("client déconnecté :", socket.id);
+    console.log("🔴 Client déconnecté :", socket.id);
   });
 });
+
+
 
 
 
