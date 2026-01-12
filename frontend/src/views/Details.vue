@@ -211,11 +211,14 @@ async function updateStatus() {
                 </div>
              </div>
 
-             <!-- Si Visiteur : Badge Stylisé (carré, bordure bleue) -->
              <div v-else class="border border-blue-plumepixel p-2 bg-gray-50 font-medium text-gray-800 flex items-center gap-2">
                 <span v-if="item.status === 'open' || !item.status">En recherche</span>
                 <span v-else-if="item.status === 'in_progress'">En cours</span>
                 <span v-else>Terminé</span>
+             </div>
+
+             <div class="mt-2 text-xs text-gray-500 flex items-start gap-1">
+                <p>Cette œuvre est ouverte à la collaboration. Toute contribution implique un accord de co-propriété (voir CGU).</p>
              </div>
         </div>
 

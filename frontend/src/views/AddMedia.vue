@@ -278,6 +278,16 @@ async function submit() {
                     </div>
                 </div>
 
+                <!-- Legal Agreement Checkbox (Visible only if collaboration is ON) -->
+                <div v-if="isPublic && allowCollaboration" class="mt-6 bg-blue-50 p-4 border border-blue-100 rounded-sm">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" required class="mt-1 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 rounded">
+                        <span class="text-sm text-gray-700">
+                            <strong>Conditions de co-propriété :</strong> Je comprends qu'en activant la collaboration, j'accepte que les contributions futures soient soumises au régime de co-propriété de la plateforme (voir CGU).
+                        </span>
+                    </label>
+                </div>
+
             </section>
 
         </div>
