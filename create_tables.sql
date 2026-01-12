@@ -52,7 +52,8 @@ CREATE TABLE IF NOT EXISTS Messages (
   sender_id INTEGER NOT NULL,
   receiver_id INTEGER NOT NULL,
   content TEXT NOT NULL,
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  is_read INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS notifications (

@@ -18,7 +18,7 @@ router.get("/", optionalAuth, (req, res) => {
   */
   const sql = `
 SELECT 
-  m.id, m.title, m.description, m.type, m.url, m.content, m.created_at, m.is_public, m.allow_collaboration,
+  m.id, m.title, m.description, m.type, m.url, m.content, m.created_at, m.is_public, m.allow_collaboration, u.username,
   GROUP_CONCAT(t.name) AS tags,
 (SELECT 1 FROM likes WHERE user_id = ? AND media_id = m.id) AS is_liked,
 (SELECT COUNT(*) FROM likes WHERE media_id = m.id) AS likes_count
@@ -69,10 +69,11 @@ router.get('/threads', optionalAuth, (req, res) => {
 
     for (const parent of parents) {
       const childrenSql = `
-        SELECT id, title, type, url, created_at 
-        FROM media 
-        WHERE parent_id = ?
-        ORDER BY created_at ASC
+        SELECT m.id, m.title, m.type, m.url, m.created_at, u.username
+        FROM media m
+        LEFT JOIN users u ON m.user_id = u.user_id
+        WHERE m.parent_id = ?
+        ORDER BY m.created_at ASC
       `;
 
       const children = await new Promise((resolve, reject) => {
@@ -128,7 +129,7 @@ router.get("/:id", optionalAuth, (req, res) => {
     };
 
     // collaborations
-const collabsSql = `
+    const collabsSql = `
   SELECT 
     m.id,
     m.title,

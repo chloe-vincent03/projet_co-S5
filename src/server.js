@@ -91,26 +91,26 @@ io.on("connection", (socket) => {
     socket.join(`user:${userId}`);
   });
 
-socket.on("message", (msg) => {
-  if (!msg.sender_id || !msg.receiver_id) return;
+  socket.on("message", (msg) => {
+    if (!msg.sender_id || !msg.receiver_id) return;
 
-  // 💾 enregistrer le message en SQLite
-  database.run(
-    "INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)",
-    [msg.sender_id, msg.receiver_id, msg.content],
-    (err) => {
-      if (err) {
-        console.error("Erreur insertion message:", err.message);
+    // 💾 enregistrer le message en SQLite
+    database.run(
+      "INSERT INTO messages (sender_id, receiver_id, content, created_at) VALUES (?, ?, ?, datetime('now'))",
+      [msg.sender_id, msg.receiver_id, msg.content],
+      (err) => {
+        if (err) {
+          console.error("Erreur insertion message:", err.message);
+        }
       }
-    }
-  );
+    );
 
-  // 📤 envoyer au destinataire
-  io.to(`user:${msg.receiver_id}`).emit("message", msg);
+    // 📤 envoyer au destinataire
+    io.to(`user:${msg.receiver_id}`).emit("message", msg);
 
-  // 📤 renvoyer à l'expéditeur
-  io.to(`user:${msg.sender_id}`).emit("message", msg);
-});
+    // 📤 renvoyer à l'expéditeur
+    io.to(`user:${msg.sender_id}`).emit("message", msg);
+  });
 
 
   socket.on("disconnect", () => {
