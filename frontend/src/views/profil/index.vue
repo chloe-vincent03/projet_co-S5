@@ -1,8 +1,9 @@
 <script setup>
-import { useUserStore } from "../../stores/user";
+import { useUserStore } from "@/stores/user";
 import { useRouter } from "vue-router";
 import { ref, computed, watchEffect } from "vue";
 import MyButton from "@/components/MyButton.vue";
+import MediaCard from "@/components/MediaCard.vue";
 import api from "@/api/axios";
 
 const store = useUserStore();
@@ -16,20 +17,22 @@ const activeTab = ref("galerie");
 const user = computed(() => store.user);
 const galerie = computed(() => allMedia.value);
 
+// 🔄 Chargement des données utilisateur
 watchEffect(async () => {
-  if (user.value && user.value.user_id) {
-    try {
-      const resMedia = await api.get(`/media/user/${user.value.user_id}`);
-      allMedia.value = resMedia.data;
+  if (!user.value?.user_id) return;
 
-      const resThreads = await api.get(`/media/user/${user.value.user_id}/threads`);
-      threads.value = resThreads.data;
-    } catch (e) {
-      console.error(e);
-    }
+  try {
+    const resMedia = await api.get(`/media/user/${user.value.user_id}`);
+    allMedia.value = resMedia.data ?? [];
+
+    const resThreads = await api.get(`/media/user/${user.value.user_id}/threads`);
+    threads.value = resThreads.data ?? [];
+  } catch (err) {
+    console.error(err);
   }
 });
 
+// ACTIONS
 async function logout() {
   await store.logout();
   router.push("/login");
@@ -51,7 +54,7 @@ async function generateBook() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: `Livre de ${user.value.username}`,
-        worksIds: allMedia.value.map((m) => m.id),
+        worksIds: allMedia.value.map(m => m.id),
         author: user.value.username,
       }),
     });
@@ -63,10 +66,15 @@ async function generateBook() {
     a.download = `Livre_${user.value.username}.pdf`;
     a.click();
     window.URL.revokeObjectURL(url);
-  } catch (err) {
+  } catch {
     message.value = "Impossible de générer le livre.";
   }
 }
+
+watchEffect(() => {
+  console.log(allMedia.value);
+});
+
 </script>
 
 <template>
@@ -85,6 +93,7 @@ async function generateBook() {
           </h1>
 
           <p class="text-sm text-gray-500">@{{ user?.username }}</p>
+
           <p class="text-xs text-gray-400 mt-1">
             Membre depuis le
             {{ new Date(user?.created_at).toLocaleDateString("fr-FR") }}
@@ -98,7 +107,7 @@ async function generateBook() {
 
       <!-- ACTIONS -->
       <div class="flex flex-col sm:flex-row gap-4 mt-8">
-        <MyButton class="w-full sm:w-auto" @click="goToSettings" icon="setting"
+        <MyButton class="w-full sm:w-auto" icon="setting" @click="goToSettings"
           :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }">
           Paramètres
         </MyButton>
@@ -126,12 +135,7 @@ async function generateBook() {
       <p v-if="message" class="mt-4 text-red-600">{{ message }}</p>
 
       <!-- TABS -->
-      <div class="
-          flex gap-6 mt-14
-          text-blue-plumepixel font-[PlumePixel] text-lg
-          border-b pb-2
-          overflow-x-auto
-        ">
+      <div class="flex gap-6 mt-14 text-blue-plumepixel font-[PlumePixel] text-lg border-b pb-2 overflow-x-auto">
         <button class="whitespace-nowrap" @click="activeTab = 'galerie'"
           :class="activeTab === 'galerie' ? 'underline' : 'opacity-50'">
           Ma galerie
@@ -144,36 +148,11 @@ async function generateBook() {
       </div>
 
       <!-- GALERIE -->
-      <div v-if="activeTab === 'galerie'" class="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        <router-link v-for="m in galerie" :key="m.id" :to="`/oeuvre/${m.id}`">
-          <div class="aspect-square bg-gray-200 relative overflow-hidden rounded-lg group">
-            <div v-if="!m.is_public"
-              class="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded z-10">
-              🔒 Privé
-            </div>
+     <div v-if="activeTab === 'galerie'" class="mt-10 columns-2 sm:columns-3 lg:columns-4 gap-4">
+        <MediaCard v-for="m in galerie" :key="m.id" :item="m" class="mb-4" />
 
-            <img v-if="m.type === 'image'" :src="m.url"
-              class="w-full h-full object-cover group-hover:scale-110 transition" />
-
-            <video v-else-if="m.type === 'video'" :src="m.url" class="w-full h-full object-cover" muted playsinline
-              preload="metadata" />
-
-            <div v-else class="w-full h-full flex items-center justify-center p-4 text-center text-sm bg-white">
-              <span v-if="m.type === 'audio'">🎧 Audio</span>
-              <span v-else class="line-clamp-4">{{ m.content }}</span>
-            </div>
-          </div>
-
-          <div class="mt-2">
-            <h3 class="font-bold truncate">{{ m.title }}</h3>
-            <p class="text-xs text-gray-500">
-              {{ new Date(m.created_at).toLocaleDateString() }}
-            </p>
-          </div>
-        </router-link>
-
-        <p v-if="galerie.length === 0" class="col-span-full text-gray-500 italic">
-          Vous n'avez encore publié aucune œuvre.
+        <p v-if="galerie.length === 0" class="text-gray-500 italic mt-6">
+          Aucune œuvre publiée.
         </p>
       </div>
 
@@ -197,12 +176,12 @@ async function generateBook() {
             </div>
 
             <div class="mt-3 text-sm">
-              <h2 class="font-[PlumePixel] text-lg truncate">{{ thread.title }}</h2>
+              <h2 class="font-[PlumePixel] text-lg truncate">
+                {{ thread.title }}
+              </h2>
               <div class="flex justify-between text-xs text-gray-500 mt-1">
                 <span>{{ thread.username }}</span>
-                <span>
-                  {{ new Date(thread.created_at).toLocaleDateString("fr-FR") }}
-                </span>
+                <span>{{ new Date(thread.created_at).toLocaleDateString("fr-FR") }}</span>
               </div>
             </div>
           </div>

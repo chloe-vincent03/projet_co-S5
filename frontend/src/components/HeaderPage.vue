@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { RouterLink } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import IconLogo from "@/components/icons/IconLogo.vue";
@@ -7,12 +7,36 @@ import MyButton from "./MyButton.vue";
 import IconChat from "./icons/IconChat.vue";
 
 const userStore = useUserStore();
+const unreadCount = computed(() => userStore.unreadMessagesCount);
+
+onMounted(() => {
+  if (userStore.isLoggedIn) {
+    userStore.fetchUnreadNotifications();
+
+    userStore.fetchUnreadMessages();      // 👈 AJOUT
+
+  }
+});
+
 
 const menuOpen = ref(false);
 const toggleMenu = () => (menuOpen.value = !menuOpen.value);
 const closeMenu = () => (menuOpen.value = false);
 
 const isLoggedIn = computed(() => userStore.isLoggedIn);
+watch(
+  () => userStore.isLoggedIn,
+  (logged) => {
+    if (logged) {
+      userStore.fetchUnreadMessages();
+      userStore.fetchUnreadNotifications();
+    }
+  },
+  { immediate: true }
+);
+
+
+
 </script>
 
 <template>
@@ -81,17 +105,44 @@ const isLoggedIn = computed(() => userStore.isLoggedIn);
                 Mes coups de cœur
               </RouterLink>
             </li>
-            <li class="hover:underline hover:text-blue-plumepixel">
-              
-              <RouterLink @click="closeMenu" to="/messagerie">
-                <IconChat />
+
+          <li class="relative">
+              <RouterLink @click="closeMenu" to="/messagerie" class="relative inline-flex">
+                <IconChat class="w-7 h-7" />
+
+                <!-- 🔴 BADGE -->
+                <span
+    v-if="unreadCount > 0"
+    class="absolute -top-1 -right-2
+           bg-red-500 text-white
+           text-[10px] font-bold
+           rounded-full
+           min-w-[18px] h-[18px]
+           flex items-center justify-center
+           px-1"
+  >
+    {{ unreadCount }}
+  </span>
               </RouterLink>
             </li>
-
-            <li>
-              <MyButton @click="closeMenu" to="/profil" :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }">
-                Mon Profil
-              </MyButton>
+            <li class="relative">
+              <RouterLink to="/notifications" class="relative">
+notifications
+                <span v-if="userStore.unreadNotifications > 0" class="absolute -top-1 -right-2
+             bg-red-500 text-white
+             text-[10px] font-bold
+             rounded-full
+             min-w-[18px] h-[18px]
+             flex items-center justify-center">
+                  {{ userStore.unreadNotifications }}
+                </span>
+              </RouterLink>
+            </li>
+            <li class="">
+              <MyButton @click="closeMenu" to="/profil" :style="{
+                backgroundColor: 'var(--color-blue-plumepixel)',
+              }">Mon Profil</MyButton>
+              
             </li>
           </template>
         </ul>

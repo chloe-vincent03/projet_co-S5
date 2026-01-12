@@ -19,6 +19,8 @@ import Contact from "@/views/Contact.vue";
 import CoupDeCoeur from "@/views/coupDeCoeur.vue";
 import Galerie from "@/views/Galerie.vue";
 
+import Notifications from "@/views/notifications.vue";
+
 
 const routes = [
   { path: "/", name: "index", component: index }, // 👈 accueil ici
@@ -106,6 +108,11 @@ const routes = [
     path: "/galerie",
     name: "galerie",
     component: Galerie,
+  },
+  {
+    path: "/notifications",
+    name: "notifications",
+    component: Notifications,
   },
 ];
 

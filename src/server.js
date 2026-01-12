@@ -11,6 +11,7 @@ import cookieParser from "cookie-parser";
 import http from "http";
 import { Server } from "socket.io";
 import bookRoutes from "./routes/book.routes.js";
+import notificationsRouter from "./routes/notification.routes.js";
 
 import db from "./config/database.js"; // pour enregistrer les messages
 
@@ -62,6 +63,8 @@ app.use("/api/media", mediaRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/book", bookRoutes);
+app.use("/api/notification", notificationsRouter);
+
 
 // -----------------------------
 // STATIC FILES
@@ -87,43 +90,33 @@ io.on("connection", (socket) => {
   });
 
   //  Le client envoie un message
-socket.on("message", (data) => {
-  const { sender_id, receiver_id, content, image_url } = data;
+socket.on("message", (msg) => {
+  this.lastMessage = msg;
 
-  const createdAt = new Date().toISOString();
+  const userStore = useUserStore();
+  const myId = userStore.user?.user_id;
 
-  db.getDB().run(
-    `
-    INSERT INTO Messages (sender_id, receiver_id, content, image_url, created_at)
-    VALUES (?, ?, ?, ?, ?)
-    `,
-    [sender_id, receiver_id, content, image_url, createdAt],
-    function (err) {
-      if (err) {
-        console.error("❌ Erreur insert message:", err);
-        return;
-      }
+  // ✅ SI JE REÇOIS UN MESSAGE
+  if (msg.receiver_id === myId) {
+    // 🔴 incrément badge messages DIRECTEMENT
+    userStore.unreadMessagesCount++;
+  }
 
-      const savedMessage = {
-        id: this.lastID,
-        sender_id,
-        receiver_id,
-        content,
-        image_url,
-        created_at: createdAt,
-      };
-
-      io.to(`user:${receiver_id}`).emit("message", savedMessage);
-      io.to(`user:${sender_id}`).emit("message", savedMessage);
-    }
-  );
+  // ✅ afficher dans le chat actif
+  if (
+    msg.sender_id === this.receiverId ||
+    msg.receiver_id === this.receiverId
+  ) {
+    this.messages.push(msg);
+  }
 });
-
 
   socket.on("disconnect", () => {
     console.log("client déconnecté :", socket.id);
   });
 });
+
+
 
 // -----------------------------
 // START SERVER

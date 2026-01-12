@@ -5,6 +5,7 @@ import { useRoute } from "vue-router";
 import api from "@/api/axios";
 import MyButton from "@/components/MyButton.vue";
 import { useUserStore } from "@/stores/user";
+import MediaCard from "@/components/MediaCard.vue";
 
 const route = useRoute();
 const userStore = useUserStore();
@@ -16,6 +17,11 @@ const activeTab = ref("galerie");
 
 const galerie = computed(() => allMedia.value);
 const currentUser = computed(() => userStore.user);
+
+const collaborations = computed(() =>
+  threads.value.filter(thread => thread.children.length > 0)
+);
+
 
 // 🔁 Charger user quand l’ID change
 watch(
@@ -113,21 +119,11 @@ const deleteUser = async () => {
       </div>
 
       <!-- GALERIE -->
-      <div v-if="activeTab === 'galerie'" class="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        <router-link v-for="m in galerie" :key="m.id" :to="`/oeuvre/${m.id}`" class="block">
-          <div class="aspect-square bg-gray-200 overflow-hidden rounded-lg">
-            <img v-if="m.type === 'image'" :src="m.url" class="w-full h-full object-cover" />
+      <!-- GALERIE -->
+      <div v-if="activeTab === 'galerie'" class="mt-10 columns-2 sm:columns-3 lg:columns-4 gap-4">
+        <MediaCard v-for="m in galerie" :key="m.id" :item="m" class="mb-4" />
 
-            <video v-else-if="m.type === 'video'" :src="m.url" class="w-full h-full object-cover" muted playsinline
-              preload="metadata" />
-
-            <div v-else class="w-full h-full flex items-center justify-center text-xs text-gray-600">
-              {{ m.type.toUpperCase() }}
-            </div>
-          </div>
-        </router-link>
-
-        <p v-if="galerie.length === 0" class="col-span-full text-gray-500 italic">
+        <p v-if="galerie.length === 0" class="text-gray-500 italic mt-6">
           Aucune œuvre publiée.
         </p>
       </div>

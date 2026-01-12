@@ -4,6 +4,7 @@ import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import LikeButton from "@/components/LikeButton.vue";
+import MediaCard from "@/components/MediaCard.vue";
 
 
 const route = useRoute();
@@ -245,25 +246,13 @@ const goToProfile = (profileUserId) => {
     </div>
 
     <!-- SECTION COLLABORATIONS -->
-    <div v-if="item && item.collaborations && item.collaborations.length > 0" class="mt-12 border-t pt-8">
-      <h2 class="text-2xl font-['PlumePixel'] mb-6">Collaborations</h2>
+   <div v-if="item && item.collaborations && item.collaborations.length > 0" class="mt-12 border-t pt-8">
+      <h2 class="text-2xl font-['PlumePixel'] mb-6">
+        Collaborations
+      </h2>
+
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div v-for="collab in item.collaborations" :key="collab.id" class="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition">
-          <router-link :to="`/oeuvre/${collab.id}`" class="block">
-            <div v-if="collab.type === 'image'" class="h-48 overflow-hidden">
-               <img :src="collab.url" class="w-full h-full object-cover">
-            </div>
-            <div v-else class="h-48 bg-gray-100 flex items-center justify-center text-gray-400">
-               <span v-if="collab.type === 'video'">Vidéo</span>
-               <span v-else-if="collab.type === 'audio'">Audio</span>
-               <span v-else>Texte</span>
-            </div>
-            <div class="p-4">
-              <h3 class="font-bold text-lg mb-1">{{ collab.title }}</h3>
-              <p class="text-xs text-gray-500">{{ new Date(collab.created_at).toLocaleDateString() }}</p>
-            </div>
-          </router-link>
-        </div>
+        <MediaCard v-for="collab in item.collaborations" :key="collab.id" :item="collab" />
       </div>
     </div>
 

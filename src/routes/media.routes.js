@@ -128,17 +128,34 @@ router.get("/:id", optionalAuth, (req, res) => {
     };
 
     // collaborations
-    const collabsSql = `
-      SELECT id, title, type, url, created_at, user_id 
-      FROM media 
-      WHERE parent_id = ?
-      ORDER BY created_at ASC
-    `;
+const collabsSql = `
+  SELECT 
+    m.id,
+    m.title,
+    m.type,
+    m.url,
+    m.created_at,
+    m.user_id,
 
-    db.all(collabsSql, [id], (err, children) => {
-      media.collaborations = children || [];
+    -- 🔥 LIKES POUR CHAQUE COLLAB
+    (SELECT COUNT(*) FROM likes WHERE media_id = m.id) AS likes_count,
+    (SELECT 1 FROM likes WHERE media_id = m.id AND user_id = ?) AS is_liked
+
+  FROM media m
+  WHERE m.parent_id = ?
+  ORDER BY m.created_at ASC
+`;
+
+
+    db.all(collabsSql, [userId, id], (err, children) => {
+      media.collaborations = (children || []).map((c) => ({
+        ...c,
+        likes_count: c.likes_count ?? 0,
+        is_liked: !!c.is_liked,
+      }));
       res.json(media);
     });
+
   });
 });
 
@@ -289,30 +306,49 @@ router.post('/', authenticateSession, upload.single('file'), async (req, res) =>
 // GET all media for a specific user
 router.get("/user/:id", optionalAuth, (req, res) => {
   const userId = req.params.id;
-
   const requesterId = req.user ? req.user.user_id : -1;
 
   let sql = `
-    SELECT id, title, url, type, description, created_at, parent_id, is_public
-    FROM media
-    WHERE user_id = ?
+    SELECT 
+      m.id,
+      m.title,
+      m.url,
+      m.type,
+      m.description,
+      m.content,
+      m.created_at,
+      m.parent_id,
+      m.is_public,
+
+      -- 🔥 LIKES
+      (SELECT COUNT(*) FROM likes WHERE media_id = m.id) AS likes_count,
+      (SELECT 1 FROM likes WHERE media_id = m.id AND user_id = ?) AS is_liked
+
+    FROM media m
+    WHERE m.user_id = ?
   `;
 
-  // Si ce n'est pas le propriétaire qui regarde, on ne montre que les publics
-  // On compare en string/int donc '!=' ou conversion
   if (requesterId != userId) {
-    sql += ` AND is_public = 1`;
+    sql += ` AND m.is_public = 1`;
   }
 
-  sql += ` ORDER BY created_at DESC`;
+  sql += ` ORDER BY m.created_at DESC`;
 
-  db.all(sql, [userId], (err, rows) => {
-    if (err)
-      return res.status(500).json({ success: false, message: err.message });
+  db.all(sql, [requesterId, userId], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
 
-    res.json(rows);
+    const medias = rows.map((row) => ({
+      ...row,
+      is_liked: !!row.is_liked,
+      likes_count: row.likes_count ?? 0,
+    }));
+
+    res.json(medias);
   });
 });
+
 
 // GET threads for a specific user (Author of parent OR Author of a response)
 router.get("/user/:id/threads", optionalAuth, (req, res) => {
@@ -375,19 +411,43 @@ router.post("/:id/like", authenticateSession, (req, res) => {
   const mediaId = req.params.id;
   const userId = req.user.user_id;
 
-  const sql = `
-    INSERT INTO likes (user_id, media_id)
-    VALUES (?, ?)
-  `;
+  const checkSql = `SELECT user_id FROM media WHERE id = ?`;
 
-  db.run(sql, [userId, mediaId], function (err) {
-    if (err) {
-      return res.status(409).json({ error: "Déjà liké" });
+  db.get(checkSql, [mediaId], (err, row) => {
+    if (err) return res.status(500).json({ error: "Erreur serveur" });
+    if (!row) return res.status(404).json({ error: "Œuvre introuvable" });
+
+    // 🚫 Pas le droit de liker sa propre œuvre
+    if (row.user_id === userId) {
+      return res
+        .status(403)
+        .json({ error: "Impossible de liker sa propre œuvre" });
     }
 
-    res.json({ message: "Like ajouté" });
+    const sql = `
+      INSERT INTO likes (user_id, media_id)
+      VALUES (?, ?)
+    `;
+
+    db.run(sql, [userId, mediaId], function (err) {
+      if (err) {
+        return res.status(409).json({ error: "Déjà liké" });
+      }
+
+      // 🔔 AJOUT NOTIFICATION LIKE (ICI EXACTEMENT)
+      db.run(
+        `
+        INSERT INTO notifications (user_id, type, actor_id, media_id)
+        VALUES (?, 'like', ?, ?)
+        `,
+        [row.user_id, userId, mediaId]
+      );
+
+      res.json({ message: "Like ajouté" });
+    });
   });
 });
+
 
 
 // Unlike une œuvre
@@ -615,6 +675,9 @@ router.put('/:id', authenticateSession, upload.single('file'), async (req, res) 
     });
   });
 });
+
+
+
 
 
 export default router;

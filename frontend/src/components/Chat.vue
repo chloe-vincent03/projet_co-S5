@@ -28,16 +28,22 @@ watch(
     chat.init(userStore.user.user_id);
     await chat.loadHistory(id);
 
+    // ✅ ICI EXACTEMENT 👇
+    await api.post(`/messages/mark-read/${id}`);
+    userStore.unreadMessagesCount = 0;
+
     const res = await api.get(`/auth/users/${id}`);
     receiver.value = res.data;
 
-    // ✅ scroll immédiat en bas (PAS smooth)
     await nextTick();
     messagesContainer.value.scrollTop =
       messagesContainer.value.scrollHeight;
+          // ✅ backend
+
   },
   { immediate: true }
 );
+
 
 
 // auto-scroll

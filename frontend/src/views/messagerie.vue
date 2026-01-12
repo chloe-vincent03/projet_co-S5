@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useUserStore } from "@/stores/user";
 import Chat from "@/components/Chat.vue";
 import api from "@/api/axios";
@@ -25,59 +25,52 @@ watch(
   async (user) => {
     if (!user) return;
     const res = await api.get("/messages/conversations");
-    conversations.value = res.data;
+
+    conversations.value = res.data.map(c => ({
+      ...c,
+      unread_count: 0, // 🔴 OBLIGATOIRE
+    }));
   },
   { immediate: true }
 );
 
 
 
+
 watch(
   () => chatStore.lastMessage,
-  async (msg) => {
+  (msg) => {
     if (!msg || !userStore.user) return;
 
     const myId = userStore.user.user_id;
-    const otherUserId =
-      msg.sender_id === myId ? msg.receiver_id : msg.sender_id;
+    if (msg.receiver_id !== myId) return;
 
-    const index = conversations.value.findIndex(
-      (c) => c.user_id === otherUserId
+    const conv = conversations.value.find(
+      c => c.user_id === msg.sender_id
     );
 
-    let username;
-    let avatar;
-
-    // 🟢 Conversation existante
-    if (index !== -1) {
-      username = conversations.value[index].username;
-      avatar = conversations.value[index].avatar;
-
-      conversations.value.splice(index, 1);
+    if (conv && activeUserId.value !== msg.sender_id) {
+      conv.unread_count = (conv.unread_count || 0) + 1;
     }
-    // 🔥 NOUVELLE conversation → fetch user
-    else {
-      const res = await api.get(`/auth/users/${otherUserId}`);
-      username = res.data.username;
-      avatar = res.data.avatar;
-    }
-
-    conversations.value.unshift({
-      user_id: otherUserId,
-      username,
-      avatar,
-      last_message: msg.content,
-      last_date: msg.created_at ?? new Date().toISOString(),
-    });
   }
 );
 
 
+
+
 const openConversation = (userId) => {
+  activeUserId.value = userId;
+
+  const conv = conversations.value.find(c => c.user_id === userId);
+  if (conv) {
+    conv.unread_count = 0; // 🔥 DISPARITION IMMÉDIATE DU POINT
+  }
+
   router.replace({
     query: { userId },
   });
 };
+
 
 watch(
   () => route.query.userId,
@@ -85,6 +78,19 @@ watch(
     activeUserId.value = id ? Number(id) : null;
   },
   { immediate: true }
+);
+
+onMounted(() => {
+  if (userStore.user) {
+    chatStore.init(userStore.user.user_id);
+  }
+});
+
+watch(
+  () => chatStore.lastMessage,
+  (msg) => {
+    console.log("🔥 MESSAGE SOCKET REÇU", msg);
+  }
 );
 
 
@@ -100,19 +106,24 @@ watch(
              " :class="activeUserId ? 'hidden lg:block' : 'block'">
       <div class="p-4 lg:text-2xl text-xl text-blue-plumepixel font-[PlumePixel]">Messages</div>
 
-      <div v-for="c in conversations" :key="c.user_id" @click="openConversation(c.user_id)"
-        class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-100">
-        <img class="w-10 h-10 object-cover border border-blue-600" :src="c.avatar || '/avatar.png'" />
+      <li v-for="c in conversations" @click="openConversation(c.user_id)" :key="c.user_id" 
+        class="flex items-center gap-3 p-3 border-b cursor-pointer"
+        :class="{
+          'bg-blue-50 font-semibold': c.unread_count > 0
+        }">
+        <div class="flex-1">
+          <div class="flex justify-between">
+            <span>{{ c.username }}</span>
 
-        <div class="flex-1 min-w-0">
-          <div class="font-medium truncate">
-            {{ c.username }}
+            <!-- 🔴 PETIT POINT -->
+            <span v-if="c.unread_count > 0" class="w-2 h-2 bg-red-500 rounded-full"></span>
           </div>
-          <div class="text-xs text-gray-500 truncate">
+
+          <p class="text-sm text-gray-500 truncate">
             {{ c.last_message }}
-          </div>
+          </p>
         </div>
-      </div>
+      </li>
     </aside>
 
     <!-- COLONNE DROITE : chat -->

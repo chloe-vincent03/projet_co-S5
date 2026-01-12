@@ -10,6 +10,22 @@ import path from "path";
 const router = express.Router();
 const DB = db.getDB();
 
+router.get("/unread-count", authenticateSession, (req, res) => {
+  const userId = req.user.user_id;
+
+  DB.get(
+    `SELECT COUNT(*) as count
+     FROM Messages
+     WHERE receiver_id = ? AND is_read = 0`,
+    [userId],
+    (err, row) => {
+      if (err) return res.status(500).json({ error: "Erreur serveur" });
+      res.json({ count: row.count });
+    }
+  );
+});
+
+
 // ✅ 1️⃣ CONVERSATIONS EN PREMIER
 router.get("/conversations", authenticateSession, (req, res) => {
   const userId = req.user.user_id;
@@ -46,6 +62,30 @@ router.get("/conversations", authenticateSession, (req, res) => {
   });
 });
 
+router.post("/mark-read/:otherUserId", authenticateSession, (req, res) => {
+  const me = req.user.user_id;
+  const other = req.params.otherUserId;
+
+  const sql = `
+    UPDATE Messages
+    SET is_read = 1
+    WHERE receiver_id = ?
+      AND sender_id = ?
+      AND is_read = 0
+  `;
+
+  DB.run(sql, [me, other], function (err) {
+    if (err) {
+      console.error("Erreur mark-read:", err);
+      return res.status(500).json({ error: "Erreur serveur" });
+    }
+
+    res.json({ success: true });
+  });
+});
+
+
+
 // ✅ 2️⃣ ENSUITE seulement la route dynamique
 router.get("/:otherUserId", authenticateSession, (req, res) => {
   const me = req.user.user_id;
@@ -66,6 +106,8 @@ router.get("/:otherUserId", authenticateSession, (req, res) => {
   );
 });
 
+
+
 router.post(
   "/image",
   authenticateSession,
@@ -80,6 +122,9 @@ router.post(
     });
   }
 );
+
+// ✅ Marquer les messages comme lus pour une conversation
+
 
 
 

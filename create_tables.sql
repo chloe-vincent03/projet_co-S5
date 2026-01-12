@@ -54,3 +54,13 @@ CREATE TABLE IF NOT EXISTS Messages (
   content TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,          -- propriétaire de la notif
+  type TEXT NOT NULL,                -- "like"
+  actor_id INTEGER NOT NULL,          -- celui qui a liké
+  media_id INTEGER NOT NULL,
+  is_read INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

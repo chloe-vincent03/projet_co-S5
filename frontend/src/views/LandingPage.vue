@@ -8,15 +8,15 @@ import IconLogo from "@/components/icons/IconLogo.vue";
     <main class="text-blue-plumepixel">
 
         <!-- HERO -->
-        <section class="flex flex-col items-center justify-center text-center px-6 py-20 lg:py-0">
-            <IconLogo class="mt-12" />
+        <section class="flex flex-col items-center justify-center text-center px-6 lg:py-0 py-10">
+            <IconLogo class="mt-12 w-44 h-44 lg:w-auto lg:h-auto" />
 
-            <h1 class="lg:text-2xl text-xl sm:text-lg text-black lg:mb-8 lg:mt-7 font-[PlumePixel]">
+            <h1 class="lg:text-2xl text-xl sm:text-lg text-black lg:mb-8 mt-7 font-[PlumePixel]">
                 Inspirez-vous.
                 Inspirez les autres.
             </h1>
 
-            <MyButton to="/register" class="mt-6 lg:mt-0" :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }">
+            <MyButton size="large" to="/register" class="mt-6 lg:mt-0" :style="{ backgroundColor: 'var(--color-blue-plumepixel)' }">
                 Rejoins la communauté !
             </MyButton>
         </section>
@@ -82,11 +82,11 @@ import IconLogo from "@/components/icons/IconLogo.vue";
         </section>
 
         <!-- CTA FINAL -->
-        <section class="py-24 text-center px-6">
-            <RouterLink to="/register"
-                class="inline-block bg-blue-plumepixel text-white px-10 py-4 font-[PlumePixel] rounded hover:opacity-90 transition">
-                Inscrivez-vous maintenant
-            </RouterLink>
+        <section class="lg:py-24 text-center px-6">
+            <MyButton icon="plume" size="large" to="/register" class="mt-6 lg:mt-0" :style="{ backgroundColor: 'var(--color-blue-plumepixel)'}">
+                Inscrivez-vous maintenant !
+            </MyButton>
+    
         </section>
 
     </main>
