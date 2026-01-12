@@ -205,6 +205,12 @@ const goToProfile = (profileUserId) => {
 
         </div>
 
+
+        <!-- Copyright -->
+        <div class="mb-6 text-sm text-gray-500">
+            <p>Protection des droits : <span class="font-medium">© {{ new Date(item.created_at).getFullYear() }} {{ item.username }} - Tous droits réservés.</span></p>
+        </div>
+
         <!-- ZONE BOUTONS PROPRIÉTAIRE OU ADMIN -->
         <div v-if="isOwner || (userStore.user && userStore.user.is_admin)" class="border-t pt-4 mt-4 flex gap-4">
             <MyButton 
