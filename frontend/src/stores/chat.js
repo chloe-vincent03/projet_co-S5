@@ -11,7 +11,8 @@ export const useChatStore = defineStore("chat", {
   state: () => ({
     messages: [],
     receiverId: null,
-    lastMessage: null, // 🔥 NOUVEAU → pour la colonne gauche
+    lastMessage: null,
+    conversations: [], // 🔥 NOUVEAU → pour la colonne gauche
   }),
 
   actions: {
@@ -23,18 +24,24 @@ export const useChatStore = defineStore("chat", {
 
       socket.emit("register", userId);
 
-      socket.on("message", (msg) => {
-        // 🔥 1. notifier la messagerie (colonne gauche)
-        this.lastMessage = msg;
+socket.on("message", (msg) => {
+  const userStore = useUserStore();
 
-        // 🔥 2. afficher dans le chat actif si concerné
-        if (
-          msg.sender_id === this.receiverId ||
-          msg.receiver_id === this.receiverId
-        ) {
-          this.messages.push(msg);
-        }
-      });
+  // 🔴 si je reçois un message
+  if (msg.receiver_id === userStore.user?.user_id) {
+    userStore.unreadMessagesCount++;
+  }
+
+  this.lastMessage = msg;
+
+  if (
+    msg.sender_id === this.receiverId ||
+    msg.receiver_id === this.receiverId
+  ) {
+    this.messages.push(msg);
+  }
+});
+
     },
 
     // 📜 charger l'historique
@@ -55,5 +62,19 @@ export const useChatStore = defineStore("chat", {
         image_url,
       });
     },
+    async fetchConversations() {
+      const res = await api.get("/messages/conversations");
+      this.conversations = res.data.map(c => ({
+        ...c,
+        unread_count: c.unread_count ?? 0,
+      }));
+    },
+
+    setUnreadForUser(userId, count = 0) {
+      const convo = this.conversations.find(c => c.user_id === userId);
+      if (convo) convo.unread_count = count;
+    },
   },
+
+  
 });

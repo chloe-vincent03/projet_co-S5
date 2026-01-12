@@ -55,7 +55,7 @@ watch(
         <p v-else-if="likedWorks.length === 0"
             class="italic text-gray-500 border border-dashed p-6 text-center rounded">
             Vous n’avez encore liké aucune œuvre.<br />
-            Explorez la galerie et laissez parler votre cœur ❤️
+            Explorez la galerie et laissez parler votre cœur 
         </p>
 
         <!-- GALERIE -->
