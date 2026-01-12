@@ -1,6 +1,8 @@
 import { defineStore } from "pinia";
 import { io } from "socket.io-client";
 import api from "@/api/axios"; // ✅ PAS axios brut
+import { useUserStore } from "@/stores/user";
+
 
 // 🔌 connexion socket (UNE SEULE FOIS)
 const socket = io("http://localhost:3000", {
