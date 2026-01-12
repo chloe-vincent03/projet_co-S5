@@ -16,6 +16,7 @@ CREATE TABLE media (
     parent_id INTEGER, -- NULL si oeuvre originale, ID du parent si réponse (collaboration)
     is_public INTEGER DEFAULT 1, -- 1=Public, 0=Privé
     allow_collaboration INTEGER DEFAULT 1, -- 1=Oui, 0=Non
+    status TEXT DEFAULT 'open', -- 'open', 'in_progress', 'finished'
     created_at TEXT DEFAULT (datetime('now')),
 
     FOREIGN KEY(user_id) REFERENCES Users(user_id),

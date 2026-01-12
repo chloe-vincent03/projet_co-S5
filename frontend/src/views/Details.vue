@@ -88,6 +88,30 @@ const goToProfile = (profileUserId) => {
     router.push(`/profil/${profileUserId}`);
   }
 };
+
+async function updateStatus() {
+  if (!item.value) return;
+  try {
+    const res = await fetch(`http://localhost:3000/api/media/${item.value.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        ...item.value, // On renvoie tout l'objet pour ne pas casser les autres champs (car PUT écrase souvent)
+        status: item.value.status 
+      })
+    });
+    if (res.ok) {
+        // Succès
+        console.log("Status mis à jour");
+    } else {
+        alert("Erreur lors de la mise à jour du statut");
+    }
+  } catch (e) {
+    console.error(e);
+    alert("Erreur réseau");
+  }
+}
 </script>
 
 <template>
@@ -167,6 +191,34 @@ const goToProfile = (profileUserId) => {
           </span>
         </div>
 
+        <!-- Status & Badge (Style DA) -->
+        <div class="mb-6 w-full max-w-xs" v-if="item.allow_collaboration">
+             <label class="block font-bold mb-2 text-sm uppercase tracking-wide text-blue-plumepixel">Statut de la collaboration</label>
+             
+             <!-- Si Propriétaire : Select Stylisé -->
+             <div v-if="isOwner" class="relative">
+                 <select 
+                    v-model="item.status" 
+                    @change="updateStatus"
+                    class="w-full border border-blue-plumepixel p-2 bg-white font-medium focus:outline-none focus:border-black transition-colors appearance-none cursor-pointer"
+                 >
+                     <option value="open">En recherche</option>
+                     <option value="in_progress">En cours</option>
+                     <option value="finished">Terminé</option>
+                 </select>
+                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-blue-plumepixel">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+             </div>
+
+             <!-- Si Visiteur : Badge Stylisé (carré, bordure bleue) -->
+             <div v-else class="border border-blue-plumepixel p-2 bg-gray-50 font-medium text-gray-800 flex items-center gap-2">
+                <span v-if="item.status === 'open' || !item.status">En recherche</span>
+                <span v-else-if="item.status === 'in_progress'">En cours</span>
+                <span v-else>Terminé</span>
+             </div>
+        </div>
+
         <!-- METADATA -->
         <div class="text-sm text-gray-600 mb-4 flex flex-wrap gap-2">
           <span>{{ new Date(item.created_at).toLocaleDateString() }}</span>
@@ -237,7 +289,7 @@ const goToProfile = (profileUserId) => {
       </div>
 
       <!-- COLONNE DROITE (bouton collaborer desktop) -->
-      <div v-if="item.allow_collaboration" class="lg:w-64 flex-shrink-0 lg:flex lg:flex-col">
+      <div v-if="item.allow_collaboration && item.status !== 'finished'" class="lg:w-64 flex-shrink-0 lg:flex lg:flex-col">
         <MyButton
         :to="`/ajouter?parent_id=${item.id}`"
       icon="plume"
