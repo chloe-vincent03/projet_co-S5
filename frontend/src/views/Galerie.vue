@@ -17,6 +17,7 @@ const galleryData = ref([]);
 const sort = ref('date-desc');
 const filterType = ref('all');
 const filterTags = ref('');
+const filterAuthor = ref('');
 
 async function loadGallery() {
   if (galleryData.value.length === 0) {
@@ -46,6 +47,12 @@ const filtered = computed(() => {
     );
   }
 
+  // Filtrer par auteur
+  if (filterAuthor.value.trim() !== "") {
+    const searchAuthor = filterAuthor.value.toLowerCase();
+    items = items.filter(i => i.username && i.username.toLowerCase().includes(searchAuthor));
+  }
+
   // Trier
   items.sort((a, b) => {
     if (sort.value === 'date-desc') return new Date(b.created_at) - new Date(a.created_at);
@@ -65,7 +72,7 @@ const filtered = computed(() => {
 
 
 <section class="p-6">
-<h1 class="font-[PlumePixel] text-3xl mb-4 ml-4 text-blue-plumepixel">Galerie des œuvres</h1>
+<h1 class="font-[PlumePixel] text-4xl mb-4 ml-4 text-blue-plumepixel">Galerie des œuvres</h1>
 
 <div class="flex flex-wrap items-center gap-4 mb-6">
 
@@ -92,6 +99,14 @@ const filtered = computed(() => {
     v-model="filterTags"
     class="border px-2 py-1 text-sm border-blue-plumepixel"
     placeholder="noël, vidéo"
+  >
+
+  <label class="text-sm font-medium">Auteur :</label>
+  <input
+    type="text"
+    v-model="filterAuthor"
+    class="border px-2 py-1 text-sm border-blue-plumepixel"
+    placeholder="Nom d'utilisateur"
   >
 </div>
 

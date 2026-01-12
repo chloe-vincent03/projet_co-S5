@@ -8,6 +8,7 @@ const isLoading = ref(true);
 const sort = ref('date-desc');
 const filterType = ref('all');
 const filterTags = ref('');
+const filterAuthor = ref('');
 
 const filteredThreads = computed(() => {
   let items = [...threads.value];
@@ -24,6 +25,15 @@ const filteredThreads = computed(() => {
     items = items.filter(i => 
       (i.title && i.title.toLowerCase().includes(search)) || 
       (i.description && i.description.toLowerCase().includes(search))
+    );
+  }
+
+  // Filtrer par auteur
+  if (filterAuthor.value.trim() !== "") {
+    const searchAuthor = filterAuthor.value.toLowerCase();
+    items = items.filter(i => 
+      (i.username && i.username.toLowerCase().includes(searchAuthor)) || 
+      (i.children && i.children.some(c => c.username && c.username.toLowerCase().includes(searchAuthor)))
     );
   }
 
@@ -55,13 +65,13 @@ onMounted(async () => {
 
 <template>
   <div class="px-8 lg:px-12 py-12">
-    <h1 class="text-4xl font-['PlumePixel'] mb-8 text-center text-blue-plumepixel">Galerie des Collaborations</h1>
+    <h1 class="text-4xl font-['PlumePixel'] mb-8 text-left text-blue-plumepixel">Galerie des Collaborations</h1>
 
     <!-- FILTRES -->
-    <div class="flex flex-wrap items-center justify-center gap-4 mb-12">
+    <div class="flex flex-wrap items-center justify-start gap-4 mb-12">
         <div class="flex items-center gap-2">
             <label class="text-sm font-medium">Trier :</label>
-            <select v-model="sort" class="border px-2 py-1 rounded text-sm bg-white">
+            <select v-model="sort" class="border border-blue-plumepixel px-2 py-1 text-sm bg-white focus:outline-none">
                 <option value="date-desc">Du + récent au + ancien</option>
                 <option value="date-asc">Du + ancien au + récent</option>
                 <option value="title-asc">Titre A → Z</option>
@@ -71,7 +81,7 @@ onMounted(async () => {
 
         <div class="flex items-center gap-2">
             <label class="text-sm font-medium">Nature :</label>
-            <select v-model="filterType" class="border px-2 py-1 rounded text-sm bg-white">
+            <select v-model="filterType" class="border border-blue-plumepixel px-2 py-1 text-sm bg-white focus:outline-none">
                 <option value="all">Tous</option>
                 <option value="image">Images</option>
                 <option value="audio">Audio</option>
@@ -81,8 +91,13 @@ onMounted(async () => {
         </div>
 
         <div class="flex items-center gap-2">
+             <label class="text-sm font-medium">Auteur :</label>
+             <input type="text" v-model="filterAuthor" class="border border-blue-plumepixel px-2 py-1 text-sm focus:outline-none" placeholder="Nom d'utilisateur...">
+        </div>
+
+        <div class="flex items-center gap-2">
              <label class="text-sm font-medium">Recherche :</label>
-             <input type="text" v-model="filterTags" class="border px-2 py-1 rounded text-sm" placeholder="Titre, description...">
+             <input type="text" v-model="filterTags" class="border border-blue-plumepixel px-2 py-1 text-sm focus:outline-none" placeholder="Titre, description...">
         </div>
     </div>
 
