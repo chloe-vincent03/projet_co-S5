@@ -28,7 +28,7 @@ const dirname = path.dirname(filename);
 // -----------------------------
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: true,
     credentials: true,
   })
 );
@@ -52,7 +52,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // mettre true en prod (HTTPS)
+      secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
     },
   })
@@ -71,13 +71,19 @@ app.use("/api/notification", notificationsRouter);
 // -----------------------------
 // STATIC FILES
 // -----------------------------
-app.use(express.static(path.join(dirname, "public")));
+app.use(express.static(path.join(dirname, "../frontend/dist")));
+
+app.get("*", (req, res) => {
+  res.sendFile(
+    path.join(dirname, "../frontend/dist/index.html")
+  );
+});
 
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: true,
     credentials: true,
   },
 });
