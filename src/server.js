@@ -73,11 +73,7 @@ app.use("/api/notification", notificationsRouter);
 // -----------------------------
 app.use(express.static(path.join(dirname, "../frontend/dist")));
 
-app.get("*", (req, res) => {
-  res.sendFile(
-    path.join(dirname, "../frontend/dist/index.html")
-  );
-});
+
 
 const server = http.createServer(app);
 
@@ -125,8 +121,11 @@ io.on("connection", (socket) => {
 });
 
 
-
-
+app.get("*", (req, res) => {
+  res.sendFile(
+    path.join(dirname, "../frontend/dist/index.html")
+  );
+});
 
 // -----------------------------
 // START SERVER
@@ -135,3 +134,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Serveur + Socket.io sur http://localhost:${PORT}`);
 });
+
