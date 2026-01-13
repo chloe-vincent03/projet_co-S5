@@ -1,0 +1,37 @@
+name: Deploy to Infomaniak
+
+on:
+  push:
+    branches:
+      - main  # Déclenche le déploiement lors d'un push sur la branche main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.INFOMANIAK_HOST }}
+          username: ${{ secrets.INFOMANIAK_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # 1. Se déplacer dans le dossier du projet
+            cd ~/sites/plumepixel.chloe-vct.fr
+            
+            # 2. Récupérer les derniers changements depuis GitHub
+            git pull origin main
+            
+            # 3. Installer les dépendances et build (si nécessaire)
+            export PATH=$PATH:/opt/alt/node20/bin # Chemin vers Node (à ajuster selon votre version)
+            npm install
+            npm run build --if-present
+            
+            # 4. Redémarrer l'instance Node.js chez Infomaniak
+            # Sur les nouveaux hébergements Infomaniak, toucher le fichier restart relance l'app
+            touch tmp/restart.txt
