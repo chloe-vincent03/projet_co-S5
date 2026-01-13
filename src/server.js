@@ -28,7 +28,7 @@ const dirname = path.dirname(filename);
 // -----------------------------
 app.use(
   cors({
-    origin: true,
+    origin: "https://plume-pixel.netlify.app",
     credentials: true,
   })
 );
@@ -79,7 +79,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: true,
+    origin: "https://plume-pixel.netlify.app",
     credentials: true,
   },
 });
@@ -133,6 +133,5 @@ app.get(/.*/, (req, res) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Serveur + Socket.io sur http://localhost:${PORT}`);
-  console.log("✅ Frontend served from ../frontend/dist");
 });
 
