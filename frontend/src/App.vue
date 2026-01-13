@@ -5,6 +5,7 @@ import FooterPage from "./components/FooterPage.vue";
 
 const store = useUserStore();
 store.fetchUser(); // récupère l'utilisateur au chargement
+
 </script>
 
 

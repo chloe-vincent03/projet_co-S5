@@ -75,6 +75,16 @@ watchEffect(() => {
   console.log(allMedia.value);
 });
 
+// useHead({
+//   title: item.value.title,
+//   meta: [
+//     {
+//       name: 'description',
+//       content: item.value.description || 'Découvre cette œuvre.'
+//     }
+//   ]
+// })
+
 </script>
 
 <template>
