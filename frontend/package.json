@@ -12,6 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@unhead/vue": "^2.1.2",
+    "@vueuse/head": "^2.0.0",
     "body-parser": "^2.2.1",
     "cors": "^2.8.5",
     "pinia": "^3.0.4",

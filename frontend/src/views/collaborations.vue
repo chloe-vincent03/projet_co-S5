@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import MyButton from "@/components/MyButton.vue";
+import IconMusic from '@/components/icons/IconMusic.vue';
 
 const threads = ref([]);
 const isLoading = ref(true);
@@ -137,8 +138,8 @@ onMounted(async () => {
                 <video v-else-if="thread.type === 'video'" :src="thread.url" class="w-full h-full object-cover"></video>
                 <div v-else class="w-full h-full flex items-center justify-center text-blue-500">
                     <!-- Icone selon type -->
-                    <span v-if="thread.type === 'audio'" class="text-4xl">🎵</span>
-                    <span v-else class="text-xl font-['PlumePixel']">TxT</span>
+                    <span v-if="thread.type === 'audio'" class="text-4xl"><icon-music /></span>
+                    <span v-else class="text-xl font-['PlumePixel']">{{ thread.content }}</span>
                 </div>
             </router-link>
 
@@ -148,8 +149,10 @@ onMounted(async () => {
                     <router-link :to="`/oeuvre/${child.id}`" class="block w-full h-full">
                         <img v-if="child.type === 'image'" :src="child.url" class="w-full h-full object-cover">
                         <div v-else class="w-full h-full flex items-center justify-center text-blue-300">
-                             <span v-if="child.type === 'audio'" class="text-xl">🎵</span>
-                             <span v-else class="text-xs">TxT</span>
+                             <span v-if="child.type === 'audio'" class="text-xl">
+                              <icon-music />
+                             </span>
+                             <span v-else class="text-xs">{{ thread.content}}</span>
                         </div>
                     </router-link>
                 </div>

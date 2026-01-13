@@ -18,7 +18,6 @@ import CGU from "@/views/CGU.vue";
 import Contact from "@/views/Contact.vue";
 import CoupDeCoeur from "@/views/coupDeCoeur.vue";
 import Galerie from "@/views/Galerie.vue";
-
 import Notifications from "@/views/notifications.vue";
 
 
@@ -154,5 +153,7 @@ router.beforeEach((to) => {
   // sinon on laisse passer
   return true;
 });
+
+
 
 export default router;
