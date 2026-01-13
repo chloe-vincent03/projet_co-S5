@@ -1,3 +1,11 @@
+<script setup>
+import { useHead } from "@vueuse/head";
+
+useHead({
+  title: "Politique de Confidentialité",
+});
+</script>
+
 <template>
     <main class="">
         <div class="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">

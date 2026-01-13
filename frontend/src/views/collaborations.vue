@@ -1,8 +1,16 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from "vue";
 import MyButton from "@/components/MyButton.vue";
 import IconMusic from '@/components/icons/IconMusic.vue';
+import { useUserStore } from "@/stores/user";
+import axios from "axios";
+import { useHead } from "@vueuse/head";
 
+useHead({
+  title: "Collaborations",
+});
+
+const userStore = useUserStore();
 const threads = ref([]);
 const isLoading = ref(true);
 

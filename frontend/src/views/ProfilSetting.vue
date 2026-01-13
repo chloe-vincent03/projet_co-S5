@@ -5,6 +5,11 @@ import { useRouter } from "vue-router";
 import MyButton from "@/components/MyButton.vue";
 import api from "@/api/axios";
 import IconOeil from "@/components/icons/IconOeil.vue";
+import { useHead } from "@vueuse/head";
+
+useHead({
+  title: "Paramètres",
+});
 
 const store = useUserStore();
 const router = useRouter();

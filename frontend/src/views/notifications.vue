@@ -3,6 +3,11 @@ import { ref, onMounted } from "vue";
 import api from "@/api/axios";
 import { RouterLink } from "vue-router";
 import { useUserStore } from "@/stores/user";
+import { useHead } from "@vueuse/head";
+
+useHead({
+  title: "Notifications",
+});
 
 const userStore = useUserStore();
 

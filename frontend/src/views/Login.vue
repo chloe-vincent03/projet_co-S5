@@ -65,6 +65,11 @@ import { useUserStore } from "../stores/user"
 import { useRouter } from "vue-router";
 import MyButton from "@/components/MyButton.vue";
 import api from "@/api/axios";
+import { useHead } from "@vueuse/head";
+
+useHead({
+  title: "Connexion",
+});
 
 const router = useRouter();
 const store = useUserStore()

@@ -4,14 +4,19 @@ import { useUserStore } from "@/stores/user";
 import api from "@/api/axios";
 import MediaCard from "@/components/MediaCard.vue";
 import { watch } from "vue";
+import { useHead } from "@vueuse/head";
 
-const store = useUserStore();
+useHead({
+  title: "Mes Coups de Cœur",
+});
+
+const userStore = useUserStore();
 const likedWorks = ref([]);
 const loading = ref(true);
 const error = ref("");
 
 watch(
-    () => store.user?.user_id,
+    () => userStore.user?.user_id,
     async (id) => {
         if (!id) return;
 
