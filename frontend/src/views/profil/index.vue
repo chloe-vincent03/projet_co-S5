@@ -5,6 +5,11 @@ import { ref, computed, watchEffect } from "vue";
 import MyButton from "@/components/MyButton.vue";
 import MediaCard from "@/components/MediaCard.vue";
 import api from "@/api/axios";
+import { useHead } from "@vueuse/head";
+
+useHead({
+  title: "Mon Profil",
+});
 
 const store = useUserStore();
 const router = useRouter();

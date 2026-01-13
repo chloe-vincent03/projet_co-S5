@@ -3,9 +3,14 @@ import { ref } from "vue";
 import { useUserStore } from "../stores/user";
 import { useRouter } from "vue-router";
 import MyButton from "@/components/MyButton.vue";
+import { useHead } from "@vueuse/head";
 
 const store = useUserStore();
 const router = useRouter();
+
+useHead({
+  title: "Inscription",
+});
 
 const username = ref("");
 const email = ref("");

@@ -5,6 +5,11 @@ import Chat from "@/components/Chat.vue";
 import api from "@/api/axios";
 import { useChatStore } from "@/stores/chat";
 import { useRoute } from "vue-router";
+import { useHead } from "@vueuse/head";
+
+useHead({
+  title: "Messagerie",
+});
 
 const route = useRoute();
 

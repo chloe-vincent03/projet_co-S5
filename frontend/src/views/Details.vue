@@ -5,12 +5,18 @@ import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import LikeButton from "@/components/LikeButton.vue";
 import MediaCard from "@/components/MediaCard.vue";
+import { useHead } from "@vueuse/head";
 
 
 const route = useRoute();
 const router = useRouter(); // Pour la redirection après suppression
 const item = ref(null);
 const userStore = useUserStore();
+
+// SEO Dynamique
+useHead({
+  title: computed(() => item.value ? item.value.title : "Détails de l'œuvre")
+});
 
 // Calculer si l'utilisateur connecté est le propriétaire
 const isOwner = computed(() => {

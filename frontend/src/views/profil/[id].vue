@@ -6,6 +6,7 @@ import api from "@/api/axios";
 import MyButton from "@/components/MyButton.vue";
 import { useUserStore } from "@/stores/user";
 import MediaCard from "@/components/MediaCard.vue";
+import { useHead } from "@vueuse/head";
 
 const route = useRoute();
 const userStore = useUserStore();
@@ -14,6 +15,11 @@ const user = ref(null);
 const allMedia = ref([]);
 const threads = ref([]);
 const activeTab = ref("galerie");
+
+// SEO
+useHead({
+  title: computed(() => user.value ? `${user.value.first_name} ${user.value.last_name}` : "Profil Utilisateur")
+});
 
 const galerie = computed(() => allMedia.value);
 const currentUser = computed(() => userStore.user);

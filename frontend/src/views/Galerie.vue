@@ -7,8 +7,12 @@ import axios from 'axios';
 import GalleryItems from '../components/GalleryItems.vue';
 import MediaCard from '@/components/MediaCard.vue';
 import MyButton from '@/components/MyButton.vue';
-// import { useHead } from '@unhead/vue'
+import { useHead } from "@vueuse/head";
 
+
+useHead({
+  title: "Galerie",
+});
 
 const store = useUserStore();
 const router = useRouter();

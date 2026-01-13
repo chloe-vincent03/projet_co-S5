@@ -47,5 +47,9 @@
 </template>
 
 <script setup>
-// Page simple, pas de logique
+import { useHead } from "@vueuse/head";
+
+useHead({
+  title: "Contact",
+});
 </script>
