@@ -7,7 +7,7 @@ export function getWorksByIds(ids) {
     const placeholders = ids.map(() => "?").join(",");
 
     const query = `
-      SELECT id, title, content, type
+      SELECT id, title, content, type, url
       FROM Media
       WHERE id IN (${placeholders})
     `;
