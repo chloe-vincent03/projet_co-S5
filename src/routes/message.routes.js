@@ -1,14 +1,29 @@
 import express from "express";
 import db from "../config/database.js";
 import { authenticateSession } from "../middleware/auth.js";
-import upload from "../middleware/upload.js";
 import multer from "multer";
-import path from "path";
-
-
+import mime from "mime-types";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const router = express.Router();
 const DB = db.getDB();
+
+// Configuration Multer (Mémoire) & S3 (Cloudflare R2)
+const upload = multer({ storage: multer.memoryStorage() });
+
+const s3 = new S3Client({
+  region: "auto",
+  endpoint: process.env.R2_ENDPOINT,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
+});
+
+const BUCKET = process.env.R2_BUCKET;
+const ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
+const PUBLIC_BASE = process.env.R2_PUBLIC_BASE;
+
 
 router.get("/unread-count", authenticateSession, (req, res) => {
   const userId = req.user.user_id;
@@ -112,14 +127,39 @@ router.post(
   "/image",
   authenticateSession,
   upload.single("image"),
-  (req, res) => {
+  async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "Aucune image reçue" });
     }
 
-    res.json({
-      image_url: `/uploads/chat/${req.file.filename}`,
-    });
+    try {
+      const originalName = req.file.originalname;
+      const key = `chat/${Date.now()}-${originalName.replace(/\s/g, "_")}`;
+      const contentType =
+        req.file.mimetype ||
+        mime.lookup(originalName) ||
+        "application/octet-stream";
+
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: BUCKET,
+          Key: key,
+          Body: req.file.buffer,
+          ContentType: contentType,
+        })
+      );
+
+      const imageUrl = PUBLIC_BASE
+        ? `${PUBLIC_BASE}/${encodeURIComponent(key)}`
+        : `https://${BUCKET}.${ACCOUNT_ID}.r2.cloudflarestorage.com/${encodeURIComponent(key)}`;
+
+      res.json({
+        image_url: imageUrl,
+      });
+    } catch (err) {
+      console.error("Erreur Upload R2 Chat:", err);
+      res.status(500).json({ error: "Erreur upload Cloudflare: " + err.message });
+    }
   }
 );
 

@@ -105,21 +105,23 @@ body {
 
 <!-- WORKS -->
 ${works
-  .map(
-    (work, index) => `
+      .map(
+        (work, index) => `
   <div class="work">
     <div class="work-title">${index + 1}. ${work.title}</div>
 
     <div class="work-content">
-      ${(work.content || "Œuvre visuelle ou multimédia.").replace(
-        /\n/g,
-        "<br>"
-      )}
+      ${work.base64Image
+            ? `<div style="text-align:center; margin-top:20px;">
+               <img src="${work.base64Image}" style="max-width:100%; max-height:800px; border-radius:4px;" />
+             </div>`
+            : (work.content || "Œuvre visuelle ou multimédia.").replace(/\n/g, "<br>")
+          }
     </div>
   </div>
 `
-  )
-  .join("")}
+      )
+      .join("")}
 
 <!-- FOOTER -->
 <div class="footer">

@@ -3,7 +3,12 @@
  * Checks if user is logged in via session
  */
 export function authenticateSession(req, res, next) {
+  console.log("🔍 AUTH MIDDLEWARE CHECK:");
+  console.log("Session ID:", req.sessionID);
+  console.log("Session User:", req.session ? req.session.user : "No Session");
+
   if (!req.session || !req.session.user) {
+    console.log("❌ ACCESS DENIED: No session or user found.");
     return res.status(401).json({
       success: false,
       message: "Access denied. Please login to continue.",
