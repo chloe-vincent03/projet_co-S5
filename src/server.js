@@ -28,7 +28,7 @@ const dirname = path.dirname(filename);
 // -----------------------------
 app.use(
   cors({
-    origin: "https://plume-pixel.netlify.app",
+    origin: true,
     credentials: true,
   })
 );
@@ -71,7 +71,7 @@ app.use("/api/notification", notificationsRouter);
 // -----------------------------
 // STATIC FILES
 // -----------------------------
-app.use(express.static(path.join(dirname, "../frontend/dist")));
+/* app.use(express.static(path.join(dirname, "../frontend/dist"))); */
 
 
 
@@ -79,7 +79,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "https://plume-pixel.netlify.app",
+    origin: true,
     credentials: true,
   },
 });
@@ -121,11 +121,7 @@ io.on("connection", (socket) => {
 });
 
 
-app.get(/.*/, (req, res) => {
-  res.sendFile(
-    path.join(dirname, "../frontend/dist/index.html")
-  );
-});
+app.use(express.static(path.join(dirname, "public")));
 
 // -----------------------------
 // START SERVER
